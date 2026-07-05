@@ -29,9 +29,30 @@
 		361200A42FF7FB4900FB2B6C /* EatAndPayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EatAndPayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		360ECF152FFAA57500F419DE /* Exceptions for "EatAndPay" folder in "EatAndPayTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/ProductCard.swift,
+			);
+			target = 361200992FF7FB4900FB2B6C /* EatAndPayTests */;
+		};
+		360ECF162FFAA57500F419DE /* Exceptions for "EatAndPay" folder in "EatAndPayUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/ProductCard.swift,
+			);
+			target = 361200A32FF7FB4900FB2B6C /* EatAndPayUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3612008F2FF7FB4800FB2B6C /* EatAndPay */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				360ECF152FFAA57500F419DE /* Exceptions for "EatAndPay" folder in "EatAndPayTests" target */,
+				360ECF162FFAA57500F419DE /* Exceptions for "EatAndPay" folder in "EatAndPayUITests" target */,
+			);
 			path = EatAndPay;
 			sourceTree = "<group>";
 		};
@@ -414,7 +435,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -445,7 +466,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

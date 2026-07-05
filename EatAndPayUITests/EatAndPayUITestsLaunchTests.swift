@@ -2,7 +2,7 @@
 //  EatAndPayUITestsLaunchTests.swift
 //  EatAndPayUITests
 //
-//  Created by Чалов Алексей Вячеславович on 03.07.2026.
+//  Created by Чалов Алексей on 03.07.2026.
 //
 
 import XCTest
