@@ -17,6 +17,7 @@ struct Product: Identifiable {
     let reviewCount: Int?
     let isFavorite: Bool
     let discount: Int?
+    let description: String?
     
     init(
         id: String = UUID().uuidString,
@@ -27,7 +28,8 @@ struct Product: Identifiable {
         rating: Double? = nil,
         reviewCount: Int? = nil,
         isFavorite: Bool = false,
-        discount: Int? = nil
+        discount: Int? = nil,
+        description: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -38,6 +40,7 @@ struct Product: Identifiable {
         self.reviewCount = reviewCount
         self.isFavorite = isFavorite
         self.discount = discount
+        self.description = description
     }
 }
 

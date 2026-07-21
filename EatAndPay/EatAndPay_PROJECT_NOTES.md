@@ -43,7 +43,7 @@ EatAndPay
 │   ├── PriceFormatter.swift
 │   └── Secrets.swift
 ├── Views
-│   ├── CatalogView.swift
+│   ├── ProductListView.swift
 │   ├── CartView.swift
 │   └── ProductCard.swift
 ├── Assets.xcassets
@@ -59,7 +59,7 @@ EatAndPay
 Есть экран:
 
 ```text
-CatalogView
+ProductListView
 ```
 
 Он:
@@ -191,9 +191,9 @@ struct ProductCard: View
 
 Чтобы картинка заполняла весь блок изображения, но не заходила на цену и текст.
 
-### 6. Локальная корзина в CatalogView
+### 6. Локальная корзина в ProductListView
 
-В `CatalogView` есть локальное состояние:
+В `ProductListView` есть локальное состояние:
 
 ```swift
 @State private var cartQuantities: [String: Int] = [:]
@@ -240,11 +240,11 @@ private func removeFromCart(_ product: Product) {
 - `onAddToCart`;
 - `onRemoveFromCart`.
 
-Это сделано правильно: карточка только отображает данные и сообщает наверх о действиях пользователя, а состояние хранится в `CatalogView`.
+Это сделано правильно: карточка только отображает данные и сообщает наверх о действиях пользователя, а состояние хранится в `ProductListView`.
 
 ### 8. Кнопка корзины в toolbar
 
-В `CatalogView` есть кнопка корзины справа сверху.
+В `ProductListView` есть кнопка корзины справа сверху.
 
 Она прямоугольная:
 
@@ -295,7 +295,7 @@ CartView(
 
 ### 10. Навигация в корзину
 
-В `CatalogView` есть:
+В `ProductListView` есть:
 
 ```swift
 @State private var isCartPresented = false
@@ -383,15 +383,15 @@ private var totalPrice: Decimal {
 
 1. В `CartView` добавить `onCheckout: () -> Void`.
 2. Добавить кнопку `Оформить заказ`.
-3. В `CatalogView` передать `onCheckout`.
-4. В `CatalogView` сделать функцию `checkout()`.
+3. В `ProductListView` передать `onCheckout`.
+4. В `ProductListView` сделать функцию `checkout()`.
 5. Пока локально:
    - показать alert "Заказ оформлен";
    - очистить `cartQuantities`;
    - закрыть корзину.
 
 После этого следующий архитектурный шаг:
-- вынести корзину из `CatalogView` в отдельную модель состояния, например `CartStore`;
+- вынести корзину из `ProductListView` в отдельную модель состояния, например `CartStore`;
 - затем сделать `OrderService`;
 - позже подключить реальные API корзины/заказов.
 
@@ -440,7 +440,7 @@ Secrets.swift
 Текущий статус:
 - Проект iOS SwiftUI.
 - Есть структура: DesignSystem, Models, DTO, Mappers, Services, Views.
-- Есть CatalogView, ProductCard, CartView.
+- Есть ProductListView, ProductCard, CartView.
 - Товары загружаются через NetworkCatalogService с API https://eat-and-pay.t02.ru/products.
 - Авторизация идёт через Secrets.accessToken. Токен не просить, не показывать и не коммитить.
 - Product содержит id, name, price, imageURL, weight, rating, reviewCount, isFavorite, discount.
@@ -449,19 +449,19 @@ Secrets.swift
 - ProductCard показывает картинку, цену, название, вес, рейтинг, отзывы.
 - Картинка товара растянута на весь верхний image-блок через scaledToFill + clipped, но цена и текст находятся ниже картинки.
 - Кнопка ProductCard работает как [В корзину], а после добавления как [-] quantity [+].
-- CatalogView хранит локальную корзину через @State cartQuantities: [String: Int].
-- В CatalogView есть addToCart, removeFromCart, quantity(for:).
+- ProductListView хранит локальную корзину через @State cartQuantities: [String: Int].
+- В ProductListView есть addToCart, removeFromCart, quantity(for:).
 - В toolbar есть прямоугольная кнопка корзины: слева иконка cart, справа общий счётчик товаров.
 - CartView открывается через navigationDestination(isPresented:).
 - CartView показывает только выбранные товары, количество, цену за единицу, сумму по каждому товару и общий итог.
-- В корзине можно менять количество через - и +, изменения отражаются в CatalogView.
+- В корзине можно менять количество через - и +, изменения отражаются в ProductListView.
 - Мы остановились перед добавлением кнопки "Оформить заказ" в CartView.
 
 Следующий шаг:
 Добавить кнопку "Оформить заказ" в CartView:
 1. Добавить onCheckout: () -> Void.
 2. Добавить checkoutButton.
-3. Передать onCheckout из CatalogView.
-4. В CatalogView сделать checkout(), который пока локально очищает cartQuantities, закрывает корзину и показывает alert "Заказ оформлен".
+3. Передать onCheckout из ProductListView.
+4. В ProductListView сделать checkout(), который пока локально очищает cartQuantities, закрывает корзину и показывает alert "Заказ оформлен".
 5. После этого обсудить вынос корзины в CartStore и дальнейшую архитектуру.
 ```

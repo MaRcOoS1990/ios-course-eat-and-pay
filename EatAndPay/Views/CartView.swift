@@ -119,64 +119,24 @@ struct CartView: View {
     }
     
     private func productImage(for product: Product) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: AppRadius.button)
-                .fill(AppColors.screenBackground)
-            
-            if let imageURL = product.imageURL {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                        
-                    case let .success(image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 72, height: 72)
-                            .clipped()
-                        
-                    case .failure:
-                        placeholderImage
-                        
-                    @unknown default:
-                        placeholderImage
-                    }
-                }
-            } else {
-                placeholderImage
-            }
-        }
-        .frame(width: 72, height: 72)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.button))
+        ProductImageView(
+            imageURL: product.imageURL,
+            size: CGSize(width: 72, height: 72),
+            cornerRadius: AppRadius.button
+        )
     }
     
     private func quantityControl(for product: Product) -> some View {
-        HStack(spacing: 12) {
-            Button {
+        QuantityControl(
+            quantity: quantities[product.id, default: 0],
+            fillsWidth: false,
+            onDecrease: {
                 onRemoveFromCart(product)
-            } label: {
-                Image(systemName: "minus")
-                    .font(.system(size: 14, weight: .bold))
-                    .frame(width: 28, height: 28)
-            }
-            
-            Text("\(quantities[product.id, default: 0])")
-                .font(.system(size: 16, weight: .semibold))
-                .frame(minWidth: 20)
-            
-            Button {
+            },
+            onIncrease: {
                 onAddToCart(product)
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .bold))
-                    .frame(width: 28, height: 28)
             }
-        }
-        .foregroundStyle(AppColors.primaryText)
-        .background(Color.purple.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.button))
-        .buttonStyle(.plain)
+        )
     }
     
     private var totalView: some View {
@@ -200,27 +160,19 @@ struct CartView: View {
         let quantity = Decimal(quantities[product.id, default: 0])
         return product.price * quantity
     }
-    
-    private var placeholderImage: some View {
-        Image(systemName: "cart")
-            .resizable()
-            .scaledToFit()
-            .foregroundStyle(AppColors.accent)
-            .padding(AppSpacing.medium)
-    }
 }
 
-#Preview {
-    NavigationStack {
-        CartView(
-            products: Product.mockProducts,
-            quantities: [
-                Product.mockProducts[0].id: 2,
-                Product.mockProducts[1].id: 1
-            ],
-            onAddToCart: { _ in },
-            onRemoveFromCart: { _ in },
-            onCheckout: {}
-        )
-    }
-}
+//#Preview {
+//    NavigationStack {
+//        CartView(
+//            products: Product.mockProducts,
+//            quantities: [
+//                Product.mockProducts[0].id: 2,
+//                Product.mockProducts[1].id: 1
+//            ],
+//            onAddToCart: { _ in },
+//            onRemoveFromCart: { _ in },
+//            onCheckout: {}
+//        )
+//    }
+//}

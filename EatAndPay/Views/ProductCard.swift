@@ -37,37 +37,12 @@ struct ProductCard: View {
     }
     
     private var productImage: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: AppRadius.card)
-                .fill(AppColors.screenBackground)
-            
-            if let imageURL = product.imageURL {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                        
-                    case let .success(image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .clipped()
-                        
-                    case .failure:
-                        placeholderImage
-                        
-                    @unknown default:
-                        placeholderImage
-                    }
-                }
-            } else {
-                placeholderImage
-            }
-        }
-        .frame(height: 170)
+        ProductImageView(
+            imageURL: product.imageURL,
+            size: CGSize(width: 170, height: 170),
+            cornerRadius: AppRadius.card
+        )
         .frame(maxWidth: .infinity)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
     }
     
     private var priceText: some View {
@@ -126,36 +101,16 @@ struct ProductCard: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                HStack {
-                    Button {
+                QuantityControl(
+                    quantity: quantity,
+                    fillsWidth: true,
+                    onDecrease: {
                         onRemoveFromCart(product)
-                    } label: {
-                        Image(systemName: "minus")
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(width: 36, height: 36)
-                    }
-                    
-                    Spacer()
-                    
-                    Text("\(quantity)")
-                        .font(.system(size: 17, weight: .semibold))
-                    
-                    Spacer()
-                    
-                    Button {
+                    },
+                    onIncrease: {
                         onAddToCart(product)
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(width: 36, height: 36)
                     }
-                }
-                .foregroundStyle(AppColors.primaryText)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.purple.opacity(0.10))
-                .clipShape(RoundedRectangle(cornerRadius: AppRadius.button))
-                .buttonStyle(.plain)
+                )
             }
         }
     }
@@ -179,11 +134,4 @@ struct ProductCard: View {
     private var reviewCountText: String {
         "\(product.reviewCount ?? 0)"
     }
-}
-
-#Preview {
-    ProductCard(product: Product.mockProducts[0])
-        .frame(width: 170)
-        .padding()
-        .background(AppColors.cardBackground)
 }

@@ -2,8 +2,6 @@
 //  EatAndPayApp.swift
 //  EatAndPay
 //
-//  Created by Чалов Алексей on 03.07.2026.
-//
 
 import SwiftUI
 
@@ -11,7 +9,11 @@ import SwiftUI
 struct EatAndPayApp: App {
     var body: some Scene {
         WindowGroup {
-            CatalogView()
+            RootTabView(
+                catalogService: AppFactory.makeCatalogService(),
+                cartService: AppFactory.makeCartService(),
+                productDetailService: AppFactory.makeProductDetailService()
+            )
         }
     }
 }

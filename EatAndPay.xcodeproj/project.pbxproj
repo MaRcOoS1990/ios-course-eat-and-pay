@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		36E44E5A2FFE78A8002B776A /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 36E44E592FFE78A8002B776A /* OpenAPIRuntime */; };
+		36E44E5D2FFE78AC002B776A /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 36E44E5C2FFE78AC002B776A /* OpenAPIURLSession */; };
+		36E44E682FFE7997002B776A /* HTTPTypes in Frameworks */ = {isa = PBXBuildFile; productRef = 36E44E672FFE7997002B776A /* HTTPTypes */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		3612009B2FF7FB4900FB2B6C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -73,6 +79,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				36E44E682FFE7997002B776A /* HTTPTypes in Frameworks */,
+				36E44E5D2FFE78AC002B776A /* OpenAPIURLSession in Frameworks */,
+				36E44E5A2FFE78A8002B776A /* OpenAPIRuntime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +108,7 @@
 				3612008F2FF7FB4800FB2B6C /* EatAndPay */,
 				3612009D2FF7FB4900FB2B6C /* EatAndPayTests */,
 				361200A72FF7FB4900FB2B6C /* EatAndPayUITests */,
+				36E44E582FFE78A8002B776A /* Frameworks */,
 				3612008E2FF7FB4800FB2B6C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -111,6 +121,13 @@
 				361200A42FF7FB4900FB2B6C /* EatAndPayUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		36E44E582FFE78A8002B776A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -127,12 +144,16 @@
 			buildRules = (
 			);
 			dependencies = (
+				3639B7382FFE7112003CF009 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3612008F2FF7FB4800FB2B6C /* EatAndPay */,
 			);
 			name = EatAndPay;
 			packageProductDependencies = (
+				36E44E592FFE78A8002B776A /* OpenAPIRuntime */,
+				36E44E5C2FFE78AC002B776A /* OpenAPIURLSession */,
+				36E44E672FFE7997002B776A /* HTTPTypes */,
 			);
 			productName = EatAndPay;
 			productReference = 3612008D2FF7FB4800FB2B6C /* EatAndPay.app */;
@@ -216,6 +237,12 @@
 			);
 			mainGroup = 361200842FF7FB4800FB2B6C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3639B7342FFE70A3003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */,
+				3639B7352FFE70BC003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */,
+				3639B7362FFE70E6003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
+				36E44E662FFE7991002B776A /* XCRemoteSwiftPackageReference "swift-http-types" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3612008E2FF7FB4800FB2B6C /* Products */;
 			projectDirPath = "";
@@ -286,6 +313,10 @@
 			isa = PBXTargetDependency;
 			target = 3612008C2FF7FB4800FB2B6C /* EatAndPay */;
 			targetProxy = 361200A52FF7FB4900FB2B6C /* PBXContainerItemProxy */;
+		};
+		3639B7382FFE7112003CF009 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 3639B7372FFE7112003CF009 /* OpenAPIGenerator */;
 		};
 /* End PBXTargetDependency section */
 
@@ -432,7 +463,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
@@ -463,7 +494,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
@@ -591,6 +622,64 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3639B7342FFE70A3003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-generator";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.13.0;
+			};
+		};
+		3639B7352FFE70BC003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-runtime";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.12.0;
+			};
+		};
+		3639B7362FFE70E6003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-urlsession";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.1;
+			};
+		};
+		36E44E662FFE7991002B776A /* XCRemoteSwiftPackageReference "swift-http-types" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-http-types";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3639B7372FFE7112003CF009 /* OpenAPIGenerator */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3639B7342FFE70A3003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */;
+			productName = "plugin:OpenAPIGenerator";
+		};
+		36E44E592FFE78A8002B776A /* OpenAPIRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3639B7352FFE70BC003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */;
+			productName = OpenAPIRuntime;
+		};
+		36E44E5C2FFE78AC002B776A /* OpenAPIURLSession */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3639B7362FFE70E6003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */;
+			productName = OpenAPIURLSession;
+		};
+		36E44E672FFE7997002B776A /* HTTPTypes */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 36E44E662FFE7991002B776A /* XCRemoteSwiftPackageReference "swift-http-types" */;
+			productName = HTTPTypes;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 361200852FF7FB4800FB2B6C /* Project object */;
 }
