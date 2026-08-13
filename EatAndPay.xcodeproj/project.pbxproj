@@ -10,6 +10,7 @@
 		36E44E5A2FFE78A8002B776A /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 36E44E592FFE78A8002B776A /* OpenAPIRuntime */; };
 		36E44E5D2FFE78AC002B776A /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 36E44E5C2FFE78AC002B776A /* OpenAPIURLSession */; };
 		36E44E682FFE7997002B776A /* HTTPTypes in Frameworks */ = {isa = PBXBuildFile; productRef = 36E44E672FFE7997002B776A /* HTTPTypes */; };
+		EAD500012FFF000100000001 /* EatAndPayDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = EAD500032FFF000100000001 /* EatAndPayDesignSystem */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +80,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EAD500012FFF000100000001 /* EatAndPayDesignSystem in Frameworks */,
 				36E44E682FFE7997002B776A /* HTTPTypes in Frameworks */,
 				36E44E5D2FFE78AC002B776A /* OpenAPIURLSession in Frameworks */,
 				36E44E5A2FFE78A8002B776A /* OpenAPIRuntime in Frameworks */,
@@ -151,6 +153,7 @@
 			);
 			name = EatAndPay;
 			packageProductDependencies = (
+				EAD500032FFF000100000001 /* EatAndPayDesignSystem */,
 				36E44E592FFE78A8002B776A /* OpenAPIRuntime */,
 				36E44E5C2FFE78AC002B776A /* OpenAPIURLSession */,
 				36E44E672FFE7997002B776A /* HTTPTypes */,
@@ -238,6 +241,7 @@
 			mainGroup = 361200842FF7FB4800FB2B6C;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				EAD500022FFF000100000001 /* XCLocalSwiftPackageReference "EatAndPayDesignSystem" */,
 				3639B7342FFE70A3003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */,
 				3639B7352FFE70BC003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */,
 				3639B7362FFE70E6003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
@@ -623,6 +627,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		EAD500022FFF000100000001 /* XCLocalSwiftPackageReference "EatAndPayDesignSystem" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/EatAndPayDesignSystem;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		3639B7342FFE70A3003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -659,6 +670,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		EAD500032FFF000100000001 /* EatAndPayDesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EAD500022FFF000100000001 /* XCLocalSwiftPackageReference "EatAndPayDesignSystem" */;
+			productName = EatAndPayDesignSystem;
+		};
 		3639B7372FFE7112003CF009 /* OpenAPIGenerator */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3639B7342FFE70A3003CF009 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */;
