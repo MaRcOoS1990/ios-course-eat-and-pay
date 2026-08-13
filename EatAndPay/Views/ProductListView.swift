@@ -12,19 +12,29 @@ struct ProductListView: View {
     private let catalogService: any CatalogService
     private let onProductsLoaded: ([Product]) -> Void
     private let productDetailService: any ProductDetailService
+    private let favoriteService: any FavoriteService
+    private let category: Category?
     
     @State private var state: CatalogState = .loading
-    @Binding private var cartQuantities: [String: Int]
+    @State private var searchText = ""
+    @Binding private var cart: Cart
+    @Binding private var favorites: Favorites
     
     init(
         catalogService: any CatalogService = MockCatalogService(),
         productDetailService: any ProductDetailService = MockProductDetailService(),
-        cartQuantities: Binding<[String: Int]> = .constant([:]),
+        favoriteService: any FavoriteService = MockFavoriteService(),
+        category: Category? = nil,
+        cart: Binding<Cart> = .constant(Cart()),
+        favorites: Binding<Favorites> = .constant(Favorites()),
         onProductsLoaded: @escaping ([Product]) -> Void = { _ in }
     ) {
         self.catalogService = catalogService
         self.productDetailService = productDetailService
-        self._cartQuantities = cartQuantities
+        self.favoriteService = favoriteService
+        self.category = category
+        self._cart = cart
+        self._favorites = favorites
         self.onProductsLoaded = onProductsLoaded
     }
     
@@ -34,64 +44,107 @@ struct ProductListView: View {
     ]
     
     var body: some View {
-        NavigationStack {
-            Group {
-                switch state {
-                case .loading:
-                    ProgressView("Загрузка каталога...")
-                    
-                case let .content(products):
-                    catalogGrid(products: products)
-                    
-                case .empty:
-                    Text("Каталог пока пуст")
-                        .foregroundStyle(AppColors.secondaryText)
-                        .padding()
-                    
-                case let .error(message):
-                    Text(message)
-                        .foregroundStyle(AppColors.errorText)
-                        .padding()
-                }
-            }
-            .navigationTitle("Каталог")
-            .task {
-                if case .loading = state {
-                    await loadProducts()
-                }
+        Group {
+            switch state {
+            case .loading:
+                ProgressView("Загрузка каталога...")
+
+            case let .content(products):
+                searchContent(products: products)
+
+            case .empty:
+                Text(emptyStateMessage)
+                    .foregroundStyle(AppColors.secondaryText)
+                    .padding()
+
+            case let .error(message):
+                Text(message)
+                    .foregroundStyle(AppColors.errorText)
+                    .padding()
             }
         }
+        .navigationTitle(category?.name ?? "Каталог")
+        .searchable(
+            text: $searchText,
+            prompt: "Поиск товаров"
+        ) {
+            ForEach(searchSuggestions, id: \.self) { suggestion in
+                Text(suggestion)
+                    .searchCompletion(suggestion)
+            }
+        }
+        .task {
+            if case .loading = state {
+                await loadProducts()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func searchContent(products: [Product]) -> some View {
+        let filteredProducts = ProductSearch.filter(products, by: searchText)
+
+        if filteredProducts.isEmpty {
+            ContentUnavailableView {
+                Label("Ничего не найдено", systemImage: "magnifyingglass")
+            } description: {
+                Text("Попробуй изменить поисковый запрос")
+            }
+        } else {
+            catalogGrid(products: filteredProducts)
+        }
+    }
+
+    private var searchSuggestions: [String] {
+        guard case let .content(products) = state else {
+            return []
+        }
+
+        return ProductSearch.suggestions(
+            from: products,
+            matching: searchText
+        )
     }
     
     private func catalogGrid(products: [Product]) -> some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: AppSpacing.small) {
                 ForEach(products) { product in
-                    NavigationLink {
-                        ProductDetailView(
-                            product: product,
-                            productDetailService: productDetailService,
-                            quantity: quantity(for: product),
-                            onAddToCart: { product in
-                                addToCart(product)
-                            },
-                            onRemoveFromCart: { product in
-                                removeFromCart(product)
+                    ProductCard(
+                        product: product,
+                        quantity: quantity(for: product),
+                        isFavorite: favorites.contains(product.id),
+                        destination: {
+                            ProductDetailView(
+                                product: product,
+                                productDetailService: productDetailService,
+                                quantity: quantity(for: product),
+                                isFavorite: favorites.contains(product.id),
+                                onAddToCart: { product in
+                                    addToCart(product)
+                                },
+                                onRemoveFromCart: { product in
+                                    removeFromCart(product)
+                                },
+                                onToggleFavorite: { product in
+                                    Task {
+                                        await toggleFavorite(product)
+                                    }
+                                }
+                            )
+                        },
+                        onAddToCart: { product in
+                            addToCart(product)
+                        },
+                        onRemoveFromCart: { product in
+                            removeFromCart(product)
+                        },
+                        onToggleFavorite: { product in
+                            Task {
+                                await toggleFavorite(product)
                             }
-                        )
-                    } label: {
-                        ProductCard(
-                            product: product,
-                            quantity: quantity(for: product),
-                            onAddToCart: { product in
-                                addToCart(product)
-                            },
-                            onRemoveFromCart: { product in
-                                removeFromCart(product)
-                            }
-                        )
-                    }
-                    .buttonStyle(.plain)
+                        }
+                    )
                 }
             }
             .padding(.horizontal, AppSpacing.medium)
@@ -104,7 +157,7 @@ struct ProductListView: View {
         state = .loading
         
         do {
-            let products = try await catalogService.loadProducts()
+            let products = try await catalogService.loadProducts(categoryID: category?.id)
             
             if products.isEmpty {
                 state = .empty
@@ -114,26 +167,39 @@ struct ProductListView: View {
                 onProductsLoaded(products)
             }
         } catch {
-    print("Catalog loading error:", error)
-    state = .error("Не удалось загрузить каталог")
-}
+            print("Catalog loading error:", error)
+            state = .error("Не удалось загрузить каталог")
+        }
+    }
+
+    private var emptyStateMessage: String {
+        category == nil
+            ? "Каталог пока пуст"
+            : "В этой категории пока нет товаров"
     }
     
     private func quantity(for product: Product) -> Int {
-        cartQuantities[product.id, default: 0]
+        cart.quantity(for: product.id)
     }
     
     private func addToCart(_ product: Product) {
-        cartQuantities[product.id, default: 0] += 1
+        cart.add(product.id)
     }
     
     private func removeFromCart(_ product: Product) {
-        let currentQuantity = cartQuantities[product.id, default: 0]
-        
-        if currentQuantity <= 1 {
-            cartQuantities[product.id] = nil
-        } else {
-            cartQuantities[product.id] = currentQuantity - 1
+        cart.remove(product.id)
+    }
+
+    @MainActor
+    private func toggleFavorite(_ product: Product) async {
+        favorites.toggle(product.id)
+        let newValue = favorites.contains(product.id)
+
+        do {
+            try await favoriteService.setFavorite(newValue, productID: product.id)
+        } catch {
+            favorites.toggle(product.id)
+            print("Favorite update error:", error)
         }
     }
 }

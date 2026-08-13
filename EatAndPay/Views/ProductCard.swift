@@ -11,30 +11,44 @@ import EatAndPayDesignSystem
 struct ProductCard: View {
     let product: Product
     let quantity: Int
+    let isFavorite: Bool
+    let destination: () -> AnyView
     let onAddToCart: (Product) -> Void
     let onRemoveFromCart: (Product) -> Void
+    let onToggleFavorite: (Product) -> Void
     
-    init(
+    init<Destination: View>(
         product: Product,
         quantity: Int = 0,
+        isFavorite: Bool? = nil,
+        @ViewBuilder destination: @escaping () -> Destination,
         onAddToCart: @escaping (Product) -> Void = { _ in },
-        onRemoveFromCart: @escaping (Product) -> Void = { _ in }
+        onRemoveFromCart: @escaping (Product) -> Void = { _ in },
+        onToggleFavorite: @escaping (Product) -> Void = { _ in }
     ) {
         self.product = product
         self.quantity = quantity
+        self.isFavorite = isFavorite ?? product.isFavorite
+        self.destination = { AnyView(destination()) }
         self.onAddToCart = onAddToCart
         self.onRemoveFromCart = onRemoveFromCart
+        self.onToggleFavorite = onToggleFavorite
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.small) {
             productImage
             VStack(alignment: .leading, spacing: AppSpacing.medium) {
-                VStack(alignment: .leading, spacing: 0) {
-                    productInfoRow
-                    ratingRow
-                        .padding(.top, 3)
+                NavigationLink {
+                    destination()
+                } label: {
+                    VStack(alignment: .leading, spacing: 0) {
+                        productInfoRow
+                        ratingRow
+                            .padding(.top, 3)
+                    }
                 }
+                .buttonStyle(.plain)
                 cartControl
             }
             .padding(.bottom, 10)
@@ -44,6 +58,26 @@ struct ProductCard: View {
     }
     
     private var productImage: some View {
+        ZStack(alignment: .topTrailing) {
+            NavigationLink {
+                destination()
+            } label: {
+                productImageContent
+            }
+            .buttonStyle(.plain)
+
+            favoriteIndicator
+                .padding(7)
+        }
+        .shadow(
+            color: AppShadow.cardColor,
+            radius: AppShadow.cardRadius,
+            x: AppShadow.cardX,
+            y: AppShadow.cardY
+        )
+    }
+
+    private var productImageContent: some View {
         GeometryReader { proxy in
             ProductImageView(
                 imageURL: product.imageURL,
@@ -57,28 +91,24 @@ struct ProductCard: View {
                 .fill(AppColors.productImageOverlay)
                 .allowsHitTesting(false)
         }
-        .overlay(alignment: .topTrailing) {
-            favoriteIndicator
-                .padding(7)
-        }
-        .shadow(
-            color: AppShadow.cardColor,
-            radius: AppShadow.cardRadius,
-            x: AppShadow.cardX,
-            y: AppShadow.cardY
-        )
+        .contentShape(RoundedRectangle(cornerRadius: AppRadius.productImage))
     }
     
     private var favoriteIndicator: some View {
-        Image(systemName: "heart.fill")
-            .font(.system(size: 22, weight: .semibold))
-            .foregroundStyle(
-                product.isFavorite
-                ? AppColors.favoriteActive
-                : AppColors.favoriteInactive
-            )
-            .frame(width: 34, height: 34)
-            .accessibilityLabel(product.isFavorite ? "В избранном" : "Не в избранном")
+        Button {
+            onToggleFavorite(product)
+        } label: {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(
+                    isFavorite
+                    ? AppColors.favoriteActive
+                    : AppColors.favoriteInactive
+                )
+                .frame(width: 34, height: 34)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isFavorite ? "Удалить из избранного" : "Добавить в избранное")
     }
     
     private var productInfoRow: some View {
