@@ -11,12 +11,26 @@ struct NetworkCatalogService: CatalogService {
     private let baseURL = URL(string: "https://eat-and-pay.t02.ru")
     private let session: URLSession = .shared
     
-    func loadProducts() async throws -> [Product] {
+    func loadProducts(categoryID: String?) async throws -> [Product] {
         guard let baseURL else {
             throw NetworkError.invalidURL
         }
         
-        let url = baseURL.appending(path: "products")
+        let productsURL = baseURL.appending(path: "products")
+
+        guard var components = URLComponents(url: productsURL, resolvingAgainstBaseURL: false) else {
+            throw NetworkError.invalidURL
+        }
+
+        if let categoryID {
+            components.queryItems = [
+                URLQueryItem(name: "category", value: categoryID)
+            ]
+        }
+
+        guard let url = components.url else {
+            throw NetworkError.invalidURL
+        }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"

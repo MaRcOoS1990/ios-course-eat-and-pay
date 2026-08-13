@@ -24,9 +24,10 @@ final class OpenAPICatalogService: CatalogService {
         )
     }
     
-    func loadProducts() async throws -> [Product] {
+    func loadProducts(categoryID: String?) async throws -> [Product] {
         let output = try await client.get_sol_products(
             query: .init(
+                category: categoryID,
                 page: 1,
                 pageSize: 20
             )

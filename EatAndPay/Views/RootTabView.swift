@@ -10,40 +10,84 @@ import SwiftUI
 struct RootTabView: View {
     
     private let catalogService: any CatalogService
+    private let categoryService: any CategoryService
+    private let favoriteService: any FavoriteService
     private let cartService: any CartService
     private let productDetailService: any ProductDetailService
     
     @State private var products: [Product] = []
-    @State private var cartQuantities: [String: Int] = [:]
+    @State private var cart = Cart()
+    @State private var favorites = Favorites()
     
     init(
         catalogService: any CatalogService,
+        categoryService: any CategoryService,
+        favoriteService: any FavoriteService,
         cartService: any CartService,
         productDetailService: any ProductDetailService
     ) {
         self.catalogService = catalogService
+        self.categoryService = categoryService
+        self.favoriteService = favoriteService
         self.cartService = cartService
         self.productDetailService = productDetailService
     }
     
     var body: some View {
         TabView {
-            ProductListView(
-                catalogService: catalogService,
-                productDetailService: productDetailService,
-                cartQuantities: $cartQuantities,
-                onProductsLoaded: { loadedProducts in
-                    products = loadedProducts
+            NavigationStack {
+                ProductListView(
+                    catalogService: catalogService,
+                    productDetailService: productDetailService,
+                    favoriteService: favoriteService,
+                    cart: $cart,
+                    favorites: $favorites,
+                    onProductsLoaded: { loadedProducts in
+                        mergeProducts(loadedProducts)
+                    }
+                )
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink {
+                            CategoryListView(
+                                categoryService: categoryService,
+                                catalogService: catalogService,
+                                productDetailService: productDetailService,
+                                favoriteService: favoriteService,
+                                cart: $cart,
+                                favorites: $favorites,
+                                onProductsLoaded: { loadedProducts in
+                                    mergeProducts(loadedProducts)
+                                }
+                            )
+                        } label: {
+                            Label("Категории", systemImage: "square.grid.3x3")
+                        }
+                    }
                 }
-            )
+            }
             .tabItem {
                 Label("Каталог", systemImage: "square.grid.2x2")
             }
+
+            NavigationStack {
+                FavoriteListView(
+                    products: products,
+                    productDetailService: productDetailService,
+                    favoriteService: favoriteService,
+                    cart: $cart,
+                    favorites: $favorites
+                )
+            }
+            .tabItem {
+                Label("Избранное", systemImage: "heart.fill")
+            }
+            .badge(favorites.count)
             
             NavigationStack {
                 CartView(
                     products: products,
-                    quantities: cartQuantities,
+                    cart: cart,
                     onAddToCart: { product in
                         addToCart(product)
                     },
@@ -63,25 +107,26 @@ struct RootTabView: View {
     }
     
     private var cartItemsCount: Int {
-        cartQuantities.values.reduce(0, +)
+        cart.itemsCount
     }
     
     private func addToCart(_ product: Product) {
-        cartQuantities[product.id, default: 0] += 1
+        cart.add(product.id)
     }
     
     private func removeFromCart(_ product: Product) {
-        let currentQuantity = cartQuantities[product.id, default: 0]
-        
-        if currentQuantity <= 1 {
-            cartQuantities[product.id] = nil
-        } else {
-            cartQuantities[product.id] = currentQuantity - 1
-        }
+        cart.remove(product.id)
     }
     
     private func checkout() {
-        print("Checkout:", cartQuantities)
-        cartQuantities = [:]
+        print("Checkout:", cart.quantities)
+        cart.removeAll()
+    }
+
+    private func mergeProducts(_ loadedProducts: [Product]) {
+        favorites.synchronize(with: loadedProducts)
+        let loadedProductIDs = Set(loadedProducts.map(\.id))
+        products.removeAll { loadedProductIDs.contains($0.id) }
+        products.append(contentsOf: loadedProducts)
     }
 }

@@ -8,11 +8,11 @@
 import Foundation
 
 protocol CatalogService {
-    func loadProducts() async throws -> [Product]
+    func loadProducts(categoryID: String?) async throws -> [Product]
 }
 
 struct MockCatalogService: CatalogService {
-    func loadProducts() async throws -> [Product] {
+    func loadProducts(categoryID: String?) async throws -> [Product] {
         let dtoProducts: [ProductDTO] = [
             ProductDTO(
                 id: "1",
@@ -54,13 +54,13 @@ struct MockCatalogService: CatalogService {
 }
 
 struct EmptyCatalogService: CatalogService {
-    func loadProducts() async throws -> [Product] {
+    func loadProducts(categoryID: String?) async throws -> [Product] {
         []
     }
 }
 
 struct ErrorCatalogService: CatalogService {
-    func loadProducts() async throws -> [Product] {
+    func loadProducts(categoryID: String?) async throws -> [Product] {
         throw CatalogServiceError.failedToLoadProducts
     }
 }

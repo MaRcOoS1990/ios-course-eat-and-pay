@@ -10,22 +10,23 @@ import EatAndPayDesignSystem
 
 struct CartView: View {
     let products: [Product]
-    let quantities: [String: Int]
+    let cart: Cart
     let onAddToCart: (Product) -> Void
     let onRemoveFromCart: (Product) -> Void
     let onCheckout: () -> Void
     
     private var cartProducts: [Product] {
         products.filter { product in
-            quantities[product.id, default: 0] > 0
+            cart.quantity(for: product.id) > 0
         }
     }
     
     private var totalPrice: Decimal {
-        cartProducts.reduce(Decimal(0)) { result, product in
-            let quantity = Decimal(quantities[product.id, default: 0])
-            return result + product.price * quantity
-        }
+        cart.totalPrice(for: products)
+    }
+
+    private var canCheckout: Bool {
+        cart.canCheckout(with: products)
     }
     
     var body: some View {
@@ -38,6 +39,9 @@ struct CartView: View {
         }
         .navigationTitle("Корзина")
         .navigationBarTitleDisplayMode(.large)
+        .safeAreaInset(edge: .bottom) {
+            checkoutSection
+        }
     }
     
     private var emptyView: some View {
@@ -67,11 +71,23 @@ struct CartView: View {
                 
                 totalView
                 
-                checkoutButton
             }
             .padding(AppSpacing.large)
         }
         .background(AppColors.screenBackground)
+    }
+
+    private var checkoutSection: some View {
+        checkoutButton
+            .padding(.horizontal, AppSpacing.medium)
+            .padding(.vertical, AppSpacing.medium)
+            .background {
+                if canCheckout {
+                    AppGradients.smoky
+                } else {
+                    AppColors.screenBackground
+                }
+            }
     }
     
     private var checkoutButton: some View {
@@ -79,14 +95,22 @@ struct CartView: View {
             onCheckout()
         } label: {
             Text("Оформить заказ")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.white)
+                .font(.headline)
+                .foregroundStyle(canCheckout ? Color.white : AppColors.secondaryText)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color.purple)
+                .frame(height: 50)
+                .background {
+                    if canCheckout {
+                        AppGradients.violet
+                    } else {
+                        AppGradients.smoky
+                    }
+                }
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.button))
         }
         .buttonStyle(.plain)
+        .disabled(!canCheckout)
+        .accessibilityHint(canCheckout ? "Оформить товары из корзины" : "Добавьте товары в корзину")
     }
     
     private func cartRow(for product: Product) -> some View {
@@ -107,7 +131,7 @@ struct CartView: View {
                         .foregroundStyle(AppColors.primaryText)
                 }
                 
-                Text("\(PriceFormatter.format(product.price)) × \(quantities[product.id, default: 0])")
+                Text("\(PriceFormatter.format(product.price)) × \(cart.quantity(for: product.id))")
                     .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(AppColors.secondaryText)
                 
@@ -129,7 +153,7 @@ struct CartView: View {
     
     private func quantityControl(for product: Product) -> some View {
         QuantityControl(
-            quantity: quantities[product.id, default: 0],
+            quantity: cart.quantity(for: product.id),
             fillsWidth: false,
             onDecrease: {
                 onRemoveFromCart(product)
@@ -141,39 +165,43 @@ struct CartView: View {
     }
     
     private var totalView: some View {
-        HStack {
-            Text("Итого")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(AppColors.primaryText)
-            
-            Spacer()
-            
-            Text(PriceFormatter.format(totalPrice))
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(AppColors.primaryText)
+        VStack(spacing: 4) {
+            HStack {
+                Text("Итого")
+                    .font(.headline)
+
+                Spacer()
+
+                Text(PriceFormatter.format(totalPrice))
+                    .font(.headline)
+            }
+
+            HStack {
+                Text("Товаров: \(cart.itemsCount)")
+
+                Spacer()
+
+                Text(PriceFormatter.format(totalPrice))
+            }
+            .font(.subheadline)
+
+            HStack {
+                Text("Доставка")
+
+                Spacer()
+
+                Text("Бесплатно")
+            }
+            .font(.subheadline)
         }
+        .foregroundStyle(AppColors.primaryText)
         .padding(AppSpacing.large)
-        .background(AppColors.cardBackground)
+        .background(AppGradients.smoky)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
     }
     
     private func totalPrice(for product: Product) -> Decimal {
-        let quantity = Decimal(quantities[product.id, default: 0])
+        let quantity = Decimal(cart.quantity(for: product.id))
         return product.price * quantity
     }
 }
-
-//#Preview {
-//    NavigationStack {
-//        CartView(
-//            products: Product.mockProducts,
-//            quantities: [
-//                Product.mockProducts[0].id: 2,
-//                Product.mockProducts[1].id: 1
-//            ],
-//            onAddToCart: { _ in },
-//            onRemoveFromCart: { _ in },
-//            onCheckout: {}
-//        )
-//    }
-//}

@@ -13,8 +13,10 @@ struct ProductDetailView: View {
     private let product: Product
     private let productDetailService: any ProductDetailService
     private let quantity: Int
+    private let isFavorite: Bool
     private let onAddToCart: (Product) -> Void
     private let onRemoveFromCart: (Product) -> Void
+    private let onToggleFavorite: (Product) -> Void
     
     @State private var displayedProduct: Product
     @State private var isLoadingDetails = false
@@ -24,14 +26,18 @@ struct ProductDetailView: View {
         product: Product,
         productDetailService: any ProductDetailService = MockProductDetailService(),
         quantity: Int = 0,
+        isFavorite: Bool = false,
         onAddToCart: @escaping (Product) -> Void = { _ in },
-        onRemoveFromCart: @escaping (Product) -> Void = { _ in }
+        onRemoveFromCart: @escaping (Product) -> Void = { _ in },
+        onToggleFavorite: @escaping (Product) -> Void = { _ in }
     ) {
         self.product = product
         self.productDetailService = productDetailService
         self.quantity = quantity
+        self.isFavorite = isFavorite
         self.onAddToCart = onAddToCart
         self.onRemoveFromCart = onRemoveFromCart
+        self.onToggleFavorite = onToggleFavorite
         self._displayedProduct = State(initialValue: product)
     }
     
@@ -49,6 +55,25 @@ struct ProductDetailView: View {
         .background(AppColors.screenBackground)
         .navigationTitle(displayedProduct.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    onToggleFavorite(displayedProduct)
+                } label: {
+                    Image(systemName: "heart.fill")
+                        .foregroundStyle(
+                            isFavorite
+                            ? AppColors.favoriteActive
+                            : AppColors.favoriteInactive
+                        )
+                }
+                .accessibilityLabel(
+                    isFavorite
+                    ? "Удалить из избранного"
+                    : "Добавить в избранное"
+                )
+            }
+        }
         .task {
             await loadProductDetails()
         }
