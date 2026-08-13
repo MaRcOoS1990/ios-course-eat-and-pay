@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import EatAndPayDesignSystem
 
 struct ProductCard: View {
     let product: Product
@@ -28,99 +29,135 @@ struct ProductCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.small) {
             productImage
-            priceText
-            productInfoRow
-            ratingRow
-            cartControl
+            VStack(alignment: .leading, spacing: AppSpacing.medium) {
+                VStack(alignment: .leading, spacing: 0) {
+                    productInfoRow
+                    ratingRow
+                        .padding(.top, 3)
+                }
+                cartControl
+            }
+            .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(AppColors.cardBackground)
     }
     
     private var productImage: some View {
-        ProductImageView(
-            imageURL: product.imageURL,
-            size: CGSize(width: 170, height: 170),
-            cornerRadius: AppRadius.card
+        GeometryReader { proxy in
+            ProductImageView(
+                imageURL: product.imageURL,
+                size: proxy.size,
+                cornerRadius: AppRadius.productImage
+            )
+        }
+        .aspectRatio(174 / 256, contentMode: .fit)
+        .overlay {
+            RoundedRectangle(cornerRadius: AppRadius.productImage)
+                .fill(AppColors.productImageOverlay)
+                .allowsHitTesting(false)
+        }
+        .overlay(alignment: .topTrailing) {
+            favoriteIndicator
+                .padding(7)
+        }
+        .shadow(
+            color: AppShadow.cardColor,
+            radius: AppShadow.cardRadius,
+            x: AppShadow.cardX,
+            y: AppShadow.cardY
         )
-        .frame(maxWidth: .infinity)
     }
     
-    private var priceText: some View {
-        Text(PriceFormatter.format(product.price))
-            .font(.system(size: 24, weight: .bold))
-            .foregroundStyle(AppColors.primaryText)
+    private var favoriteIndicator: some View {
+        Image(systemName: "heart.fill")
+            .font(.system(size: 22, weight: .semibold))
+            .foregroundStyle(
+                product.isFavorite
+                ? AppColors.favoriteActive
+                : AppColors.favoriteInactive
+            )
+            .frame(width: 34, height: 34)
+            .accessibilityLabel(product.isFavorite ? "В избранном" : "Не в избранном")
     }
     
     private var productInfoRow: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(product.name)
-                .font(.system(size: 17, weight: .regular))
+                .font(.system(size: 14, weight: .regular))
                 .foregroundStyle(AppColors.primaryText)
                 .lineLimit(1)
-            
-            Spacer()
+                .truncationMode(.tail)
             
             if let weight = product.weight {
-                Text("\(weight) г")
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(AppColors.secondaryText)
+                Text("\(weight)г")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundStyle(AppColors.catalogSecondaryText)
+                    .fixedSize()
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var ratingRow: some View {
         HStack(spacing: 4) {
             Image(systemName: "star.fill")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 11, weight: .semibold))
             
             Text(ratingText)
-                .font(.system(size: 16, weight: .regular))
-            
-            Image(systemName: "bubble")
                 .font(.system(size: 14, weight: .regular))
             
+            Image(systemName: "bubble")
+                .font(.system(size: 13, weight: .regular))
+            
             Text(reviewCountText)
-                .font(.system(size: 16, weight: .regular))
+                .font(.system(size: 14, weight: .regular))
         }
         .foregroundStyle(AppColors.primaryText)
     }
     
     private var cartControl: some View {
-        Group {
-            if quantity == 0 {
+        HStack(spacing: 5) {
+            if quantity > 0 {
                 Button {
-                    onAddToCart(product)
+                    onRemoveFromCart(product)
                 } label: {
-                    Text("В корзину")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(AppColors.primaryText)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Color.purple.opacity(0.10))
-                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.button))
+                    Image(systemName: "minus")
+                        .font(.system(size: 12, weight: .semibold))
+                        .frame(width: 16, height: 16)
                 }
-                .buttonStyle(.plain)
+
+                Text("\(quantity)")
+                    .font(.system(size: 14, weight: .semibold))
+                    .contentTransition(.numericText())
+                    .accessibilityLabel("Количество: \(quantity)")
+            }
+
+            Button {
+                onAddToCart(product)
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 12, weight: .semibold))
+                    .frame(width: 16, height: 16)
+            }
+
+            Text(PriceFormatter.format(product.price))
+                .font(.system(size: 14, weight: .semibold))
+                .lineLimit(1)
+                .fixedSize()
+        }
+        .foregroundStyle(quantity > 0 ? Color.white : AppColors.primaryText)
+        .padding(.horizontal, AppSpacing.medium)
+        .frame(minWidth: 96, minHeight: 32)
+        .background {
+            if quantity > 0 {
+                AppGradients.violet
             } else {
-                QuantityControl(
-                    quantity: quantity,
-                    fillsWidth: true,
-                    onDecrease: {
-                        onRemoveFromCart(product)
-                    },
-                    onIncrease: {
-                        onAddToCart(product)
-                    }
-                )
+                AppGradients.smoky
             }
         }
-    }
-    
-    private var placeholderImage: some View {
-        Image(systemName: "cart")
-            .resizable()
-            .scaledToFit()
-            .foregroundStyle(AppColors.accent)
-            .padding(AppSpacing.extraLarge)
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.compactButton))
+        .buttonStyle(.plain)
     }
     
     private var ratingText: String {

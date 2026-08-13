@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import EatAndPayDesignSystem
 
 struct ProductDetailView: View {
     

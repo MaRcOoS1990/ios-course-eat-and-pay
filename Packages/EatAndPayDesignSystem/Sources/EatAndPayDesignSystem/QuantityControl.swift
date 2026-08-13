@@ -1,20 +1,12 @@
-//
-//  QuantityControl.swift
-//  EatAndPay
-//
-//  Created by Чалов Алексей Вячеславович on 21.07.2026.
-//
-
 import SwiftUI
 
-struct QuantityControl: View {
-    
-    let quantity: Int
-    let fillsWidth: Bool
-    let onDecrease: () -> Void
-    let onIncrease: () -> Void
-    
-    init(
+public struct QuantityControl: View {
+    private let quantity: Int
+    private let fillsWidth: Bool
+    private let onDecrease: () -> Void
+    private let onIncrease: () -> Void
+
+    public init(
         quantity: Int,
         fillsWidth: Bool = false,
         onDecrease: @escaping () -> Void,
@@ -25,32 +17,28 @@ struct QuantityControl: View {
         self.onDecrease = onDecrease
         self.onIncrease = onIncrease
     }
-    
-    var body: some View {
+
+    public var body: some View {
         HStack {
-            Button {
-                onDecrease()
-            } label: {
+            Button(action: onDecrease) {
                 Image(systemName: "minus")
                     .font(.system(size: 16, weight: .bold))
                     .frame(width: 36, height: 36)
             }
-            
+
             if fillsWidth {
                 Spacer()
             }
-            
+
             Text("\(quantity)")
                 .font(.system(size: 17, weight: .semibold))
                 .frame(minWidth: 24)
-            
+
             if fillsWidth {
                 Spacer()
             }
-            
-            Button {
-                onIncrease()
-            } label: {
+
+            Button(action: onIncrease) {
                 Image(systemName: "plus")
                     .font(.system(size: 16, weight: .bold))
                     .frame(width: 36, height: 36)

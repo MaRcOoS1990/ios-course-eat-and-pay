@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import EatAndPayDesignSystem
 
 struct ProductListView: View {
     private let catalogService: any CatalogService
@@ -28,8 +29,8 @@ struct ProductListView: View {
     }
     
     private let columns: [GridItem] = [
-        GridItem(.flexible(), spacing: AppSpacing.large),
-        GridItem(.flexible(), spacing: AppSpacing.large)
+        GridItem(.flexible(), spacing: 3),
+        GridItem(.flexible(), spacing: 3)
     ]
     
     var body: some View {
@@ -64,7 +65,7 @@ struct ProductListView: View {
     
     private func catalogGrid(products: [Product]) -> some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: AppSpacing.extraLarge) {
+            LazyVGrid(columns: columns, spacing: AppSpacing.small) {
                 ForEach(products) { product in
                     NavigationLink {
                         ProductDetailView(
@@ -93,8 +94,8 @@ struct ProductListView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, AppSpacing.large)
-            .padding(.top, AppSpacing.large)
+            .padding(.horizontal, AppSpacing.medium)
+            .padding(.top, 10)
         }
         .background(AppColors.screenBackground)
     }

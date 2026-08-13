@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import EatAndPayDesignSystem
 
 struct CartView: View {
     let products: [Product]
