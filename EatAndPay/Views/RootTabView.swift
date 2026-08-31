@@ -40,11 +40,13 @@ struct RootTabView: View {
                     catalogService: catalogService,
                     productDetailService: productDetailService,
                     favoriteService: favoriteService,
+                    updatedProducts: products,
                     cart: $cart,
                     favorites: $favorites,
                     onProductsLoaded: { loadedProducts in
                         mergeProducts(loadedProducts)
-                    }
+                    },
+                    onProductUpdated: updateProduct
                 )
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -54,11 +56,13 @@ struct RootTabView: View {
                                 catalogService: catalogService,
                                 productDetailService: productDetailService,
                                 favoriteService: favoriteService,
+                                updatedProducts: products,
                                 cart: $cart,
                                 favorites: $favorites,
                                 onProductsLoaded: { loadedProducts in
                                     mergeProducts(loadedProducts)
-                                }
+                                },
+                                onProductUpdated: updateProduct
                             )
                         } label: {
                             Label("Категории", systemImage: "square.grid.3x3")
@@ -76,7 +80,8 @@ struct RootTabView: View {
                     productDetailService: productDetailService,
                     favoriteService: favoriteService,
                     cart: $cart,
-                    favorites: $favorites
+                    favorites: $favorites,
+                    onProductUpdated: updateProduct
                 )
             }
             .tabItem {
@@ -128,5 +133,10 @@ struct RootTabView: View {
         let loadedProductIDs = Set(loadedProducts.map(\.id))
         products.removeAll { loadedProductIDs.contains($0.id) }
         products.append(contentsOf: loadedProducts)
+    }
+
+    private func updateProduct(_ product: Product) {
+        guard let index = products.firstIndex(where: { $0.id == product.id }) else { return }
+        products[index] = product
     }
 }

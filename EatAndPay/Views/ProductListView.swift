@@ -11,9 +11,11 @@ import EatAndPayDesignSystem
 struct ProductListView: View {
     private let catalogService: any CatalogService
     private let onProductsLoaded: ([Product]) -> Void
+    private let onProductUpdated: (Product) -> Void
     private let productDetailService: any ProductDetailService
     private let favoriteService: any FavoriteService
     private let category: Category?
+    private let updatedProducts: [Product]
     
     @State private var state: CatalogState = .loading
     @State private var searchText = ""
@@ -25,17 +27,21 @@ struct ProductListView: View {
         productDetailService: any ProductDetailService = MockProductDetailService(),
         favoriteService: any FavoriteService = MockFavoriteService(),
         category: Category? = nil,
+        updatedProducts: [Product] = [],
         cart: Binding<Cart> = .constant(Cart()),
         favorites: Binding<Favorites> = .constant(Favorites()),
-        onProductsLoaded: @escaping ([Product]) -> Void = { _ in }
+        onProductsLoaded: @escaping ([Product]) -> Void = { _ in },
+        onProductUpdated: @escaping (Product) -> Void = { _ in }
     ) {
         self.catalogService = catalogService
         self.productDetailService = productDetailService
         self.favoriteService = favoriteService
         self.category = category
+        self.updatedProducts = updatedProducts
         self._cart = cart
         self._favorites = favorites
         self.onProductsLoaded = onProductsLoaded
+        self.onProductUpdated = onProductUpdated
     }
     
     private let columns: [GridItem] = [
@@ -50,7 +56,7 @@ struct ProductListView: View {
                 ProgressView("Загрузка каталога...")
 
             case let .content(products):
-                searchContent(products: products)
+                searchContent(products: currentProducts(products))
 
             case .empty:
                 Text(emptyStateMessage)
@@ -101,9 +107,15 @@ struct ProductListView: View {
         }
 
         return ProductSearch.suggestions(
-            from: products,
+            from: currentProducts(products),
             matching: searchText
         )
+    }
+
+    private func currentProducts(_ products: [Product]) -> [Product] {
+        products.map { product in
+            updatedProducts.first(where: { $0.id == product.id }) ?? product
+        }
     }
     
     private func catalogGrid(products: [Product]) -> some View {
@@ -130,7 +142,8 @@ struct ProductListView: View {
                                     Task {
                                         await toggleFavorite(product)
                                     }
-                                }
+                                },
+                                onProductUpdated: updateProduct
                             )
                         },
                         onAddToCart: { product in
@@ -170,6 +183,15 @@ struct ProductListView: View {
             print("Catalog loading error:", error)
             state = .error("Не удалось загрузить каталог")
         }
+    }
+
+    private func updateProduct(_ product: Product) {
+        if case var .content(products) = state,
+           let index = products.firstIndex(where: { $0.id == product.id }) {
+            products[index] = product
+            state = .content(products)
+        }
+        onProductUpdated(product)
     }
 
     private var emptyStateMessage: String {

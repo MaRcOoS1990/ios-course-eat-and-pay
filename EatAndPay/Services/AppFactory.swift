@@ -6,6 +6,9 @@
 import Foundation
 
 enum AppFactory {
+    static func makeReviewService() -> any ReviewService {
+        OpenAPIReviewService()
+    }
     
     static func makeCatalogService() -> any CatalogService {
         OpenAPICatalogService()

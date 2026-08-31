@@ -14,6 +14,8 @@ struct CategoryListView: View {
     private let productDetailService: any ProductDetailService
     private let favoriteService: any FavoriteService
     private let onProductsLoaded: ([Product]) -> Void
+    private let onProductUpdated: (Product) -> Void
+    private let updatedProducts: [Product]
 
     @Binding private var cart: Cart
     @Binding private var favorites: Favorites
@@ -30,17 +32,21 @@ struct CategoryListView: View {
         catalogService: any CatalogService,
         productDetailService: any ProductDetailService,
         favoriteService: any FavoriteService,
+        updatedProducts: [Product] = [],
         cart: Binding<Cart>,
         favorites: Binding<Favorites>,
-        onProductsLoaded: @escaping ([Product]) -> Void
+        onProductsLoaded: @escaping ([Product]) -> Void,
+        onProductUpdated: @escaping (Product) -> Void = { _ in }
     ) {
         self.categoryService = categoryService
         self.catalogService = catalogService
         self.productDetailService = productDetailService
         self.favoriteService = favoriteService
+        self.updatedProducts = updatedProducts
         self._cart = cart
         self._favorites = favorites
         self.onProductsLoaded = onProductsLoaded
+        self.onProductUpdated = onProductUpdated
     }
 
     var body: some View {
@@ -85,9 +91,11 @@ struct CategoryListView: View {
                             productDetailService: productDetailService,
                             favoriteService: favoriteService,
                             category: category,
+                            updatedProducts: updatedProducts,
                             cart: $cart,
                             favorites: $favorites,
-                            onProductsLoaded: onProductsLoaded
+                            onProductsLoaded: onProductsLoaded,
+                            onProductUpdated: onProductUpdated
                         )
                     } label: {
                         categoryCard(category)

@@ -12,6 +12,8 @@ struct ProductDetailView: View {
     
     private let product: Product
     private let productDetailService: any ProductDetailService
+    private let reviewService: any ReviewService
+    private let onProductUpdated: (Product) -> Void
     private let quantity: Int
     private let isFavorite: Bool
     private let onAddToCart: (Product) -> Void
@@ -21,18 +23,24 @@ struct ProductDetailView: View {
     @State private var displayedProduct: Product
     @State private var isLoadingDetails = false
     @State private var detailErrorMessage: String?
+    @State private var showsReviewForm = false
+    @State private var reviewWasSubmitted = false
     
     init(
         product: Product,
         productDetailService: any ProductDetailService = MockProductDetailService(),
+        reviewService: any ReviewService = AppFactory.makeReviewService(),
         quantity: Int = 0,
         isFavorite: Bool = false,
         onAddToCart: @escaping (Product) -> Void = { _ in },
         onRemoveFromCart: @escaping (Product) -> Void = { _ in },
-        onToggleFavorite: @escaping (Product) -> Void = { _ in }
+        onToggleFavorite: @escaping (Product) -> Void = { _ in },
+        onProductUpdated: @escaping (Product) -> Void = { _ in }
     ) {
         self.product = product
         self.productDetailService = productDetailService
+        self.reviewService = reviewService
+        self.onProductUpdated = onProductUpdated
         self.quantity = quantity
         self.isFavorite = isFavorite
         self.onAddToCart = onAddToCart
@@ -49,6 +57,7 @@ struct ProductDetailView: View {
                 productInfo
                 
                 cartControl
+                reviewsSection
             }
             .padding(AppSpacing.large)
         }
@@ -76,6 +85,12 @@ struct ProductDetailView: View {
         }
         .task {
             await loadProductDetails()
+        }
+        .sheet(isPresented: $showsReviewForm) {
+            ReviewFormView(product: displayedProduct, service: reviewService) {
+                reviewWasSubmitted = true
+                await loadProductDetails()
+            }
         }
     }
     
@@ -184,6 +199,72 @@ struct ProductDetailView: View {
     private var reviewCountText: String {
         "\(displayedProduct.reviewCount ?? 0)"
     }
+
+    private var reviewsSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.large) {
+            Text("Отзывы · \(reviewCountText)")
+                .font(.title2.bold())
+            ratingRow
+            if reviewWasSubmitted {
+                Label("Отзыв отправлен", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(AppColors.accent)
+            }
+            if isLoadingDetails {
+                ProgressView("Загрузка отзывов…")
+            } else if detailErrorMessage != nil {
+                Text(reviewWasSubmitted
+                     ? "Отзыв принят, но обновить данные не удалось. Повтори загрузку."
+                     : "Не удалось загрузить данные товара и отзывы.")
+                    .foregroundStyle(AppColors.errorText)
+                Button("Повторить загрузку") {
+                    Task { await loadProductDetails() }
+                }
+            } else if displayedProduct.reviews.isEmpty {
+                Text("Отзывов пока нет. Поделись первым впечатлением!")
+                    .foregroundStyle(AppColors.secondaryText)
+            }
+            Button("Написать отзыв") {
+                showsReviewForm = true
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppColors.accent)
+            .disabled(isLoadingDetails)
+            .accessibilityIdentifier("review.write")
+
+            ForEach(displayedProduct.reviews) { review in
+                VStack(alignment: .leading, spacing: AppSpacing.small) {
+                    HStack {
+                        Text(review.author).font(.headline)
+                        Spacer()
+                        Text(review.createdAt, format: .dateTime.day().month().year())
+                            .font(.caption)
+                            .foregroundStyle(AppColors.secondaryText)
+                    }
+                    HStack(spacing: 3) {
+                        ForEach(1...5, id: \.self) { star in
+                            Image(systemName: star <= review.rating ? "star.fill" : "star")
+                        }
+                    }
+                    .foregroundStyle(AppColors.accent)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Оценка \(review.rating) из 5")
+                    Text(review.content)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if !review.imageURLs.isEmpty {
+                        ScrollView(.horizontal) {
+                            HStack {
+                                ForEach(Array(review.imageURLs.enumerated()), id: \.offset) { _, url in
+                                    ProductImageView(imageURL: url, size: CGSize(width: 80, height: 80))
+                                }
+                            }
+                        }
+                    }
+                }
+                Divider()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
     
     @MainActor
     private func loadProductDetails() async {
@@ -197,6 +278,7 @@ struct ProductDetailView: View {
         do {
             let loadedProduct = try await productDetailService.loadProduct(id: product.id)
             displayedProduct = loadedProduct
+            onProductUpdated(loadedProduct)
         } catch {
             detailErrorMessage = error.localizedDescription
         }
