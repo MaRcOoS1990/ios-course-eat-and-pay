@@ -58,7 +58,16 @@ extension ProductMapper {
             reviewCount: product.reviews?.count,
             isFavorite: product.isFavorite,
             discount: product.discount.map { Int($0) },
-            description: product.description
+            description: product.description,
+            reviews: (product.reviews ?? []).map {
+                Review(
+                    rating: $0.rating,
+                    author: $0.author,
+                    createdAt: $0.createdAt,
+                    content: $0.content,
+                    imageURLs: $0.images.compactMap { URL(string: $0) }
+                )
+            }
         )
     }
 }

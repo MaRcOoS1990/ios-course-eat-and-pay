@@ -4,15 +4,22 @@ public struct ProductImageView: View {
     private let imageURL: URL?
     private let size: CGSize
     private let cornerRadius: CGFloat
+    private let contentMode: ContentMode
+    private let allowsRetry: Bool
+    @State private var reloadID = UUID()
 
     public init(
         imageURL: URL?,
         size: CGSize,
-        cornerRadius: CGFloat = AppRadius.card
+        cornerRadius: CGFloat = AppRadius.card,
+        contentMode: ContentMode = .fill,
+        allowsRetry: Bool = false
     ) {
         self.imageURL = imageURL
         self.size = size
         self.cornerRadius = cornerRadius
+        self.contentMode = contentMode
+        self.allowsRetry = allowsRetry
     }
 
     public var body: some View {
@@ -29,18 +36,29 @@ public struct ProductImageView: View {
                     case let .success(image):
                         image
                             .resizable()
-                            .scaledToFill()
+                            .aspectRatio(contentMode: contentMode)
                             .frame(width: size.width, height: size.height)
                             .clipped()
 
                     case .failure:
-                        placeholderImage
+                        if allowsRetry {
+                            Button {
+                                reloadID = UUID()
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .frame(width: size.width, height: size.height)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Повторить загрузку фотографии")
+                        } else {
+                            placeholderImage
+                        }
 
                     @unknown default:
                         placeholderImage
                     }
                 }
-                .id(imageURL)
+                .id("\(imageURL.absoluteString)-\(reloadID)")
             } else {
                 placeholderImage
             }
@@ -54,6 +72,6 @@ public struct ProductImageView: View {
             .resizable()
             .scaledToFit()
             .foregroundStyle(AppColors.accent)
-            .padding(AppSpacing.extraLarge)
+            .padding(min(size.width, size.height) / 4)
     }
 }

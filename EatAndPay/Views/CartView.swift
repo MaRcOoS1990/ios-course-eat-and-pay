@@ -147,8 +147,13 @@ struct CartView: View {
         ProductImageView(
             imageURL: product.imageURL,
             size: CGSize(width: 72, height: 72),
-            cornerRadius: AppRadius.button
+            cornerRadius: AppRadius.button,
+            contentMode: .fit,
+            allowsRetry: true
         )
+        .fixedSize()
+        .accessibilityLabel("Фото товара: \(product.name)")
+        .accessibilityIdentifier("cart.productImage.\(product.id)")
     }
     
     private func quantityControl(for product: Product) -> some View {

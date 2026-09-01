@@ -15,6 +15,7 @@ struct FavoriteListView: View {
 
     @Binding var cart: Cart
     @Binding var favorites: Favorites
+    var onProductUpdated: (Product) -> Void = { _ in }
     @State private var searchText = ""
 
     private let columns = [
@@ -84,7 +85,8 @@ struct FavoriteListView: View {
                                     Task {
                                         await removeFromFavorites(product)
                                     }
-                                }
+                                },
+                                onProductUpdated: onProductUpdated
                             )
                         },
                         onAddToCart: { cart.add($0.id) },
