@@ -11,6 +11,7 @@ import EatAndPayDesignSystem
 struct CartView: View {
     let products: [Product]
     let cart: Cart
+    let deliveryPrice: Decimal
     let onAddToCart: (Product) -> Void
     let onRemoveFromCart: (Product) -> Void
     let onCheckout: () -> Void
@@ -21,8 +22,12 @@ struct CartView: View {
         }
     }
     
-    private var totalPrice: Decimal {
+    private var productsPrice: Decimal {
         cart.totalPrice(for: products)
+    }
+
+    private var totalPrice: Decimal {
+        productsPrice + deliveryPrice
     }
 
     private var canCheckout: Bool {
@@ -186,7 +191,7 @@ struct CartView: View {
 
                 Spacer()
 
-                Text(PriceFormatter.format(totalPrice))
+                Text(PriceFormatter.format(productsPrice))
             }
             .font(.subheadline)
 
@@ -195,7 +200,7 @@ struct CartView: View {
 
                 Spacer()
 
-                Text("Бесплатно")
+                Text(deliveryPrice == .zero ? "Бесплатно" : PriceFormatter.format(deliveryPrice))
             }
             .font(.subheadline)
         }

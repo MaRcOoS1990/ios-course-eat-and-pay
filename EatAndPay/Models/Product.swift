@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Product: Identifiable {
+struct Product: Identifiable, Sendable {
     let id: String
     let name: String
     let price: Decimal
