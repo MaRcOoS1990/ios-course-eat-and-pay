@@ -26,6 +26,10 @@ enum AppFactory {
         OpenAPICartService()
     }
 
+    static func makeCartStore() -> CartStore {
+        CartStore(service: makeCartService())
+    }
+
     static func makeAddressService() -> any AddressService {
         OpenAPIAddressService()
     }

@@ -9,7 +9,7 @@ struct CartSnapshot: Sendable {
     let totalPrice: Decimal
 }
 
-struct LocalCartSnapshot {
+struct LocalCartSnapshot: Sendable {
     let cart: Cart
     let products: [Product]
 }

@@ -12,6 +12,7 @@ struct CartView: View {
     let products: [Product]
     let cart: Cart
     let deliveryPrice: Decimal
+    let isLoading: Bool
     let onAddToCart: (Product) -> Void
     let onRemoveFromCart: (Product) -> Void
     let onCheckout: () -> Void
@@ -36,7 +37,11 @@ struct CartView: View {
     
     var body: some View {
         Group {
-            if cartProducts.isEmpty {
+            if isLoading && cartProducts.isEmpty {
+                ProgressView("Синхронизация корзины...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppColors.screenBackground)
+            } else if cartProducts.isEmpty {
                 emptyView
             } else {
                 cartContent

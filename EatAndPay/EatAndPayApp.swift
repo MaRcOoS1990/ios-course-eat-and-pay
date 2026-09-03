@@ -24,7 +24,7 @@ struct EatAndPayApp: App {
                 catalogService: AppFactory.makeCatalogService(),
                 categoryService: AppFactory.makeCategoryService(),
                 favoriteService: AppFactory.makeFavoriteService(),
-                cartService: AppFactory.makeCartService(),
+                cartStore: AppFactory.makeCartStore(),
                 productDetailService: AppFactory.makeProductDetailService(),
                 addressService: AppFactory.makeAddressService(),
                 orderService: AppFactory.makeOrderService(),
