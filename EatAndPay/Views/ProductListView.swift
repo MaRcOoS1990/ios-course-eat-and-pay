@@ -184,6 +184,7 @@ struct ProductListView: View {
             } else {
                 state = .content(products)
                 onProductsLoaded(products)
+                await ProductImageLoader.shared.prefetch(products.compactMap(\.imageURL))
             }
         } catch {
             print("Catalog loading error:", error)

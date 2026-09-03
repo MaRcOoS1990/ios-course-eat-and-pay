@@ -6,13 +6,14 @@
 //
 
 import SwiftUI
+import EatAndPayDesignSystem
 
 struct RootTabView: View {
     
     private let catalogService: any CatalogService
     private let categoryService: any CategoryService
     private let favoriteService: any FavoriteService
-    private let cartService: any CartService
+    private let cartStore: CartStore
     private let productDetailService: any ProductDetailService
     private let addressService: any AddressService
     private let orderService: any OrderService
@@ -24,13 +25,15 @@ struct RootTabView: View {
     @State private var deliveryPrice = Decimal.zero
     @State private var didRestoreCart = false
     @State private var showsCheckout = false
+    @State private var isSynchronizingCart = false
+    @State private var pendingCartOperations = 0
     @State private var alert: UserAlert?
     
     init(
         catalogService: any CatalogService,
         categoryService: any CategoryService,
         favoriteService: any FavoriteService,
-        cartService: any CartService,
+        cartStore: CartStore,
         productDetailService: any ProductDetailService,
         addressService: any AddressService,
         orderService: any OrderService,
@@ -39,7 +42,7 @@ struct RootTabView: View {
         self.catalogService = catalogService
         self.categoryService = categoryService
         self.favoriteService = favoriteService
-        self.cartService = cartService
+        self.cartStore = cartStore
         self.productDetailService = productDetailService
         self.addressService = addressService
         self.orderService = orderService
@@ -113,6 +116,7 @@ struct RootTabView: View {
                     products: products,
                     cart: cart,
                     deliveryPrice: deliveryPrice,
+                    isLoading: isSynchronizingCart,
                     onAddToCart: { product in
                         addToCart(product)
                     },
@@ -124,7 +128,13 @@ struct RootTabView: View {
                     }
                 )
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        NavigationLink {
+                            OrderListView(orderService: orderService)
+                        } label: {
+                            Label("Заказы", systemImage: "shippingbox")
+                        }
+
                         NavigationLink {
                             AddressListView(addressService: addressService)
                         } label: {
@@ -150,6 +160,17 @@ struct RootTabView: View {
             }
             .badge(cartItemsCount)
         }
+        .overlay {
+            if pendingCartOperations > 0 {
+                ProgressView("Обновляем корзину...")
+                    .padding(.horizontal, AppSpacing.large)
+                    .padding(.vertical, AppSpacing.medium)
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.button))
+                    .shadow(radius: 8)
+                    .allowsHitTesting(false)
+            }
+        }
         .task {
             await restoreAndSynchronizeCart()
         }
@@ -167,43 +188,45 @@ struct RootTabView: View {
     }
     
     private func addToCart(_ product: Product) {
-        cart.add(product.id)
-        persistCart()
+        pendingCartOperations += 1
 
         Task { @MainActor in
+            defer { pendingCartOperations -= 1 }
+
             do {
-                try await cartService.addProduct(id: product.id)
+                let snapshot = try await cartStore.add(product)
+                applyCartSnapshot(snapshot)
             } catch {
-                cart.remove(product.id)
-                persistCart(showingErrors: false)
                 alert = .error(error, title: "Не удалось обновить корзину")
             }
         }
     }
     
     private func removeFromCart(_ product: Product) {
-        cart.remove(product.id)
-        persistCart()
+        pendingCartOperations += 1
 
         Task { @MainActor in
+            defer { pendingCartOperations -= 1 }
+
             do {
-                try await cartService.removeProduct(id: product.id)
+                let snapshot = try await cartStore.remove(product)
+                applyCartSnapshot(snapshot)
             } catch {
-                cart.add(product.id)
-                persistCart(showingErrors: false)
                 alert = .error(error, title: "Не удалось обновить корзину")
             }
         }
     }
 
     private func completeOrder() {
-        cart.removeAll()
-        deliveryPrice = .zero
+        Task { @MainActor in
+            let snapshot = await cartStore.clear()
+            applyCartSnapshot(snapshot, shouldPersist: false)
 
-        do {
-            try cartPersistence.clear()
-        } catch {
-            alert = .error(error, title: "Не удалось очистить локальную корзину")
+            do {
+                try cartPersistence.clear()
+            } catch {
+                alert = .error(error, title: "Не удалось очистить локальную корзину")
+            }
         }
     }
 
@@ -213,35 +236,58 @@ struct RootTabView: View {
         products.removeAll { loadedProductIDs.contains($0.id) }
         products.append(contentsOf: loadedProducts)
         persistCart(showingErrors: false)
+
+        Task {
+            await cartStore.updateProducts(loadedProducts)
+        }
     }
 
     private func updateProduct(_ product: Product) {
         guard let index = products.firstIndex(where: { $0.id == product.id }) else { return }
         products[index] = product
         persistCart(showingErrors: false)
+
+        Task {
+            await cartStore.updateProducts([product])
+        }
     }
 
     @MainActor
     private func restoreAndSynchronizeCart() async {
         guard !didRestoreCart else { return }
         didRestoreCart = true
+        isSynchronizingCart = true
+        defer { isSynchronizingCart = false }
 
         do {
             let localSnapshot = try cartPersistence.load()
-            cart = localSnapshot.cart
-            mergeProducts(localSnapshot.products)
+            let snapshot = await cartStore.restore(localSnapshot)
+            applyCartSnapshot(snapshot)
         } catch {
             alert = .error(error, title: "Не удалось восстановить корзину")
         }
 
         do {
-            let serverSnapshot = try await cartService.loadCart()
-            cart = serverSnapshot.cart
-            deliveryPrice = serverSnapshot.deliveryPrice
-            mergeProducts(serverSnapshot.products)
-            persistCart(showingErrors: false)
+            let serverSnapshot = try await cartStore.synchronize()
+            applyCartSnapshot(serverSnapshot)
         } catch {
             alert = .error(error, title: "Не удалось синхронизировать корзину")
+        }
+    }
+
+    private func applyCartSnapshot(
+        _ snapshot: CartSnapshot,
+        shouldPersist: Bool = true
+    ) {
+        cart = snapshot.cart
+        deliveryPrice = snapshot.deliveryPrice
+
+        let snapshotProductIDs = Set(snapshot.products.map(\.id))
+        products.removeAll { snapshotProductIDs.contains($0.id) }
+        products.append(contentsOf: snapshot.products)
+
+        if shouldPersist {
+            persistCart(showingErrors: false)
         }
     }
 

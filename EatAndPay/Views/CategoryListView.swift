@@ -119,27 +119,15 @@ struct CategoryListView: View {
 
     private func categoryCard(_ category: Category) -> some View {
         ZStack(alignment: .bottomLeading) {
-            AsyncImage(url: category.imageURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-
-                case .failure:
-                    categoryPlaceholder
-
-                case .empty:
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                @unknown default:
-                    categoryPlaceholder
-                }
+            GeometryReader { proxy in
+                ProductImageView(
+                    imageURL: category.imageURL,
+                    size: proxy.size,
+                    cornerRadius: AppRadius.button,
+                    contentMode: .fill,
+                    allowsRetry: true
+                )
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(AppColors.imageBackground)
-            .clipped()
 
             LinearGradient(
                 colors: [.clear, Color.white.opacity(0.9)],
@@ -160,19 +148,13 @@ struct CategoryListView: View {
         .accessibilityLabel("Категория \(category.name)")
     }
 
-    private var categoryPlaceholder: some View {
-        Image(systemName: "photo")
-            .font(.title2)
-            .foregroundStyle(AppColors.secondaryText)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
     private func loadCategories() async {
         state = .loading
 
         do {
             let categories = try await categoryService.loadCategories()
             state = categories.isEmpty ? .empty : .content(categories)
+            await ProductImageLoader.shared.prefetch(categories.compactMap(\.imageURL))
         } catch {
             state = .error(error.localizedDescription)
         }
