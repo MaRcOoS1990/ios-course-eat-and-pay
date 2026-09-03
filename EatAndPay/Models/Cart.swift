@@ -7,8 +7,12 @@
 
 import Foundation
 
-struct Cart {
+struct Cart: Equatable, Sendable {
     private(set) var quantities: [Product.ID: Int] = [:]
+
+    init(quantities: [Product.ID: Int] = [:]) {
+        self.quantities = quantities.filter { $0.value > 0 }
+    }
 
     var itemsCount: Int {
         quantities.values.reduce(0, +)

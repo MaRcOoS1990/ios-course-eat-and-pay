@@ -23,7 +23,15 @@ enum AppFactory {
     }
     
     static func makeCartService() -> any CartService {
-        MockCartService()
+        OpenAPICartService()
+    }
+
+    static func makeAddressService() -> any AddressService {
+        OpenAPIAddressService()
+    }
+
+    static func makeOrderService() -> any OrderService {
+        OpenAPIOrderService()
     }
     
     static func makeProductDetailService() -> any ProductDetailService {

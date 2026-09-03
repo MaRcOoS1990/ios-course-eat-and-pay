@@ -16,6 +16,8 @@ struct FavoriteListView: View {
     @Binding var cart: Cart
     @Binding var favorites: Favorites
     var onProductUpdated: (Product) -> Void = { _ in }
+    var onAddToCart: (Product) -> Void = { _ in }
+    var onRemoveFromCart: (Product) -> Void = { _ in }
     @State private var searchText = ""
 
     private let columns = [
@@ -79,8 +81,8 @@ struct FavoriteListView: View {
                                 productDetailService: productDetailService,
                                 quantity: cart.quantity(for: product.id),
                                 isFavorite: favorites.contains(product.id),
-                                onAddToCart: { cart.add($0.id) },
-                                onRemoveFromCart: { cart.remove($0.id) },
+                                onAddToCart: onAddToCart,
+                                onRemoveFromCart: onRemoveFromCart,
                                 onToggleFavorite: { product in
                                     Task {
                                         await removeFromFavorites(product)
@@ -89,8 +91,8 @@ struct FavoriteListView: View {
                                 onProductUpdated: onProductUpdated
                             )
                         },
-                        onAddToCart: { cart.add($0.id) },
-                        onRemoveFromCart: { cart.remove($0.id) },
+                        onAddToCart: onAddToCart,
+                        onRemoveFromCart: onRemoveFromCart,
                         onToggleFavorite: { product in
                             Task {
                                 await removeFromFavorites(product)

@@ -12,6 +12,8 @@ struct ProductListView: View {
     private let catalogService: any CatalogService
     private let onProductsLoaded: ([Product]) -> Void
     private let onProductUpdated: (Product) -> Void
+    private let onAddToCart: (Product) -> Void
+    private let onRemoveFromCart: (Product) -> Void
     private let productDetailService: any ProductDetailService
     private let favoriteService: any FavoriteService
     private let category: Category?
@@ -31,7 +33,9 @@ struct ProductListView: View {
         cart: Binding<Cart> = .constant(Cart()),
         favorites: Binding<Favorites> = .constant(Favorites()),
         onProductsLoaded: @escaping ([Product]) -> Void = { _ in },
-        onProductUpdated: @escaping (Product) -> Void = { _ in }
+        onProductUpdated: @escaping (Product) -> Void = { _ in },
+        onAddToCart: @escaping (Product) -> Void = { _ in },
+        onRemoveFromCart: @escaping (Product) -> Void = { _ in }
     ) {
         self.catalogService = catalogService
         self.productDetailService = productDetailService
@@ -42,6 +46,8 @@ struct ProductListView: View {
         self._favorites = favorites
         self.onProductsLoaded = onProductsLoaded
         self.onProductUpdated = onProductUpdated
+        self.onAddToCart = onAddToCart
+        self.onRemoveFromCart = onRemoveFromCart
     }
     
     private let columns: [GridItem] = [
@@ -205,11 +211,11 @@ struct ProductListView: View {
     }
     
     private func addToCart(_ product: Product) {
-        cart.add(product.id)
+        onAddToCart(product)
     }
     
     private func removeFromCart(_ product: Product) {
-        cart.remove(product.id)
+        onRemoveFromCart(product)
     }
 
     @MainActor
