@@ -120,17 +120,10 @@ struct CheckoutView: View {
                 }
 
                 Text("Оформить за \(PriceFormatter.format(totalPrice))")
-                    .font(.headline)
             }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(AppGradients.violet)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.button))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(AppPrimaryButtonStyle())
         .disabled(selectedAddressID == nil || isSubmitting)
-        .opacity(selectedAddressID == nil ? 0.45 : 1)
         .padding(AppSpacing.medium)
         .background(.regularMaterial)
     }

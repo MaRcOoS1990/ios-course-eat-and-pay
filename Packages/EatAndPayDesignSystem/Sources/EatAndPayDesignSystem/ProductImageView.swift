@@ -7,6 +7,7 @@ public struct ProductImageView: View {
     private let cornerRadius: CGFloat
     private let contentMode: ContentMode
     private let allowsRetry: Bool
+    private let placeholderSystemImage: String
 
     @State private var reloadID = UUID()
     @State private var state: LoadingState = .idle
@@ -16,13 +17,15 @@ public struct ProductImageView: View {
         size: CGSize,
         cornerRadius: CGFloat = AppRadius.card,
         contentMode: ContentMode = .fill,
-        allowsRetry: Bool = false
+        allowsRetry: Bool = false,
+        placeholderSystemImage: String = "cart"
     ) {
         self.imageURL = imageURL
         self.size = size
         self.cornerRadius = cornerRadius
         self.contentMode = contentMode
         self.allowsRetry = allowsRetry
+        self.placeholderSystemImage = placeholderSystemImage
     }
 
     public var body: some View {
@@ -72,7 +75,7 @@ public struct ProductImageView: View {
     }
 
     private var placeholderImage: some View {
-        Image(systemName: "cart")
+        Image(systemName: placeholderSystemImage)
             .resizable()
             .scaledToFit()
             .foregroundStyle(AppColors.accent)

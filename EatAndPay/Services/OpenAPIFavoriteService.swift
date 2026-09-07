@@ -7,19 +7,12 @@
 
 import Foundation
 import OpenAPIRuntime
-import OpenAPIURLSession
 
 final class OpenAPIFavoriteService: FavoriteService {
     private let client: Client
 
     init(token: String = Secrets.accessToken) {
-        self.client = Client(
-            serverURL: try! Servers.Server1.url(),
-            transport: URLSessionTransport(),
-            middlewares: [
-                BearerAuthMiddleware(token: token)
-            ]
-        )
+        client = OpenAPIClientFactory.makeClient(token: token)
     }
 
     func setFavorite(_ isFavorite: Bool, productID: Product.ID) async throws {

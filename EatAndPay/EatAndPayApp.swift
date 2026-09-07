@@ -28,6 +28,7 @@ struct EatAndPayApp: App {
                 productDetailService: AppFactory.makeProductDetailService(),
                 addressService: AppFactory.makeAddressService(),
                 orderService: AppFactory.makeOrderService(),
+                profileService: AppFactory.makeProfileService(),
                 cartPersistence: SwiftDataCartPersistence(context: modelContainer.mainContext)
             )
             .modelContainer(modelContainer)

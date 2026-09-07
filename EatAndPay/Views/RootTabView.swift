@@ -17,6 +17,7 @@ struct RootTabView: View {
     private let productDetailService: any ProductDetailService
     private let addressService: any AddressService
     private let orderService: any OrderService
+    private let profileService: any ProfileService
     private let cartPersistence: any CartPersistence
     
     @State private var products: [Product] = []
@@ -37,6 +38,7 @@ struct RootTabView: View {
         productDetailService: any ProductDetailService,
         addressService: any AddressService,
         orderService: any OrderService,
+        profileService: any ProfileService,
         cartPersistence: any CartPersistence
     ) {
         self.catalogService = catalogService
@@ -46,6 +48,7 @@ struct RootTabView: View {
         self.productDetailService = productDetailService
         self.addressService = addressService
         self.orderService = orderService
+        self.profileService = profileService
         self.cartPersistence = cartPersistence
     }
     
@@ -62,7 +65,6 @@ struct RootTabView: View {
                     onProductsLoaded: { loadedProducts in
                         mergeProducts(loadedProducts)
                     },
-                    onProductUpdated: updateProduct,
                     onAddToCart: addToCart,
                     onRemoveFromCart: removeFromCart
                 )
@@ -80,7 +82,6 @@ struct RootTabView: View {
                                 onProductsLoaded: { loadedProducts in
                                     mergeProducts(loadedProducts)
                                 },
-                                onProductUpdated: updateProduct,
                                 onAddToCart: addToCart,
                                 onRemoveFromCart: removeFromCart
                             )
@@ -101,7 +102,6 @@ struct RootTabView: View {
                     favoriteService: favoriteService,
                     cart: $cart,
                     favorites: $favorites,
-                    onProductUpdated: updateProduct,
                     onAddToCart: addToCart,
                     onRemoveFromCart: removeFromCart
                 )
@@ -159,6 +159,17 @@ struct RootTabView: View {
                 Label("Корзина", systemImage: "cart")
             }
             .badge(cartItemsCount)
+
+            NavigationStack {
+                ProfileView(
+                    profileService: profileService,
+                    orderService: orderService,
+                    addressService: addressService
+                )
+            }
+            .tabItem {
+                Label("Профиль", systemImage: "person.crop.circle")
+            }
         }
         .overlay {
             if pendingCartOperations > 0 {
@@ -174,6 +185,7 @@ struct RootTabView: View {
         .task {
             await restoreAndSynchronizeCart()
         }
+        .environment(\.productUpdateAction, ProductUpdateAction(updateProduct))
         .alert(item: $alert) { alert in
             Alert(
                 title: Text(alert.title),

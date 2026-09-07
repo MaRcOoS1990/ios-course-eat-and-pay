@@ -13,18 +13,20 @@ struct ProductDetailView: View {
     private let product: Product
     private let productDetailService: any ProductDetailService
     private let reviewService: any ReviewService
-    private let onProductUpdated: (Product) -> Void
     private let quantity: Int
     private let isFavorite: Bool
     private let onAddToCart: (Product) -> Void
     private let onRemoveFromCart: (Product) -> Void
     private let onToggleFavorite: (Product) -> Void
+
+    @Environment(\.productUpdateAction) private var productUpdateAction
     
     @State private var displayedProduct: Product
     @State private var isLoadingDetails = false
     @State private var detailErrorMessage: String?
     @State private var showsReviewForm = false
     @State private var reviewWasSubmitted = false
+    @State private var reviewSort = ReviewSort.newest
     
     init(
         product: Product,
@@ -34,13 +36,11 @@ struct ProductDetailView: View {
         isFavorite: Bool = false,
         onAddToCart: @escaping (Product) -> Void = { _ in },
         onRemoveFromCart: @escaping (Product) -> Void = { _ in },
-        onToggleFavorite: @escaping (Product) -> Void = { _ in },
-        onProductUpdated: @escaping (Product) -> Void = { _ in }
+        onToggleFavorite: @escaping (Product) -> Void = { _ in }
     ) {
         self.product = product
         self.productDetailService = productDetailService
         self.reviewService = reviewService
-        self.onProductUpdated = onProductUpdated
         self.quantity = quantity
         self.isFavorite = isFavorite
         self.onAddToCart = onAddToCart
@@ -202,8 +202,22 @@ struct ProductDetailView: View {
 
     private var reviewsSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.large) {
-            Text("Отзывы · \(reviewCountText)")
-                .font(.title2.bold())
+            HStack {
+                Text("Отзывы · \(reviewCountText)")
+                    .font(.title2.bold())
+
+                Spacer()
+
+                if displayedProduct.reviews.count > 1 {
+                    Picker("Сортировка отзывов", selection: $reviewSort) {
+                        ForEach(ReviewSort.allCases) { sort in
+                            Text(sort.title).tag(sort)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .accessibilityIdentifier("reviews.sort")
+                }
+            }
             ratingRow
             if reviewWasSubmitted {
                 Label("Отзыв отправлен", systemImage: "checkmark.circle.fill")
@@ -226,12 +240,11 @@ struct ProductDetailView: View {
             Button("Написать отзыв") {
                 showsReviewForm = true
             }
-            .buttonStyle(.borderedProminent)
-            .tint(AppColors.accent)
+            .buttonStyle(AppPrimaryButtonStyle())
             .disabled(isLoadingDetails)
             .accessibilityIdentifier("review.write")
 
-            ForEach(displayedProduct.reviews) { review in
+            ForEach(reviewSort.sort(displayedProduct.reviews)) { review in
                 VStack(alignment: .leading, spacing: AppSpacing.small) {
                     HStack {
                         Text(review.author).font(.headline)
@@ -264,6 +277,7 @@ struct ProductDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .animation(AppMotion.standard, value: reviewSort)
     }
     
     @MainActor
@@ -278,7 +292,7 @@ struct ProductDetailView: View {
         do {
             let loadedProduct = try await productDetailService.loadProduct(id: product.id)
             displayedProduct = loadedProduct
-            onProductUpdated(loadedProduct)
+            productUpdateAction(loadedProduct)
         } catch {
             detailErrorMessage = error.localizedDescription
         }

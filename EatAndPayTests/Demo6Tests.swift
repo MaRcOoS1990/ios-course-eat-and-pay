@@ -125,6 +125,22 @@ struct Demo6Tests {
         #expect(addresses[0].floor == "4")
     }
 
+    @Test func addressServiceSkipsAddressWithInvalidCoordinates() async throws {
+        let response = Data(#"""
+        [{
+          "id":"invalid-address",
+          "coordinates":[37.668],
+          "addressLine":"Неполный адрес"
+        }]
+        """#.utf8)
+        let transport = Demo6Transport(responseData: response)
+        let service = OpenAPIAddressService(client: makeClient(transport: transport))
+
+        let addresses = try await service.loadAddresses()
+
+        #expect(addresses.isEmpty)
+    }
+
     @Test func orderServiceSendsSelectedAddressAndPaymentMethod() async throws {
         let transport = Demo6Transport()
         let service = OpenAPIOrderService(client: makeClient(transport: transport))

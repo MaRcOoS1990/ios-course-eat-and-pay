@@ -6,20 +6,13 @@
 //
 
 import Foundation
-import OpenAPIURLSession
 
 final class OpenAPIProductDetailService: ProductDetailService {
     
     private let client: Client
     
     init(token: String = Secrets.accessToken) {
-        self.client = Client(
-            serverURL: try! Servers.Server1.url(),
-            transport: URLSessionTransport(),
-            middlewares: [
-                BearerAuthMiddleware(token: token)
-            ]
-        )
+        client = OpenAPIClientFactory.makeClient(token: token)
     }
     
     func loadProduct(id: String) async throws -> Product {

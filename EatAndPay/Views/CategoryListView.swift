@@ -14,7 +14,6 @@ struct CategoryListView: View {
     private let productDetailService: any ProductDetailService
     private let favoriteService: any FavoriteService
     private let onProductsLoaded: ([Product]) -> Void
-    private let onProductUpdated: (Product) -> Void
     private let onAddToCart: (Product) -> Void
     private let onRemoveFromCart: (Product) -> Void
     private let updatedProducts: [Product]
@@ -38,7 +37,6 @@ struct CategoryListView: View {
         cart: Binding<Cart>,
         favorites: Binding<Favorites>,
         onProductsLoaded: @escaping ([Product]) -> Void,
-        onProductUpdated: @escaping (Product) -> Void = { _ in },
         onAddToCart: @escaping (Product) -> Void = { _ in },
         onRemoveFromCart: @escaping (Product) -> Void = { _ in }
     ) {
@@ -50,7 +48,6 @@ struct CategoryListView: View {
         self._cart = cart
         self._favorites = favorites
         self.onProductsLoaded = onProductsLoaded
-        self.onProductUpdated = onProductUpdated
         self.onAddToCart = onAddToCart
         self.onRemoveFromCart = onRemoveFromCart
     }
@@ -101,7 +98,6 @@ struct CategoryListView: View {
                             cart: $cart,
                             favorites: $favorites,
                             onProductsLoaded: onProductsLoaded,
-                            onProductUpdated: onProductUpdated,
                             onAddToCart: onAddToCart,
                             onRemoveFromCart: onRemoveFromCart
                         )
