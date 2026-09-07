@@ -11,7 +11,6 @@ import EatAndPayDesignSystem
 struct ProductListView: View {
     private let catalogService: any CatalogService
     private let onProductsLoaded: ([Product]) -> Void
-    private let onProductUpdated: (Product) -> Void
     private let onAddToCart: (Product) -> Void
     private let onRemoveFromCart: (Product) -> Void
     private let productDetailService: any ProductDetailService
@@ -33,7 +32,6 @@ struct ProductListView: View {
         cart: Binding<Cart> = .constant(Cart()),
         favorites: Binding<Favorites> = .constant(Favorites()),
         onProductsLoaded: @escaping ([Product]) -> Void = { _ in },
-        onProductUpdated: @escaping (Product) -> Void = { _ in },
         onAddToCart: @escaping (Product) -> Void = { _ in },
         onRemoveFromCart: @escaping (Product) -> Void = { _ in }
     ) {
@@ -45,7 +43,6 @@ struct ProductListView: View {
         self._cart = cart
         self._favorites = favorites
         self.onProductsLoaded = onProductsLoaded
-        self.onProductUpdated = onProductUpdated
         self.onAddToCart = onAddToCart
         self.onRemoveFromCart = onRemoveFromCart
     }
@@ -148,8 +145,7 @@ struct ProductListView: View {
                                     Task {
                                         await toggleFavorite(product)
                                     }
-                                },
-                                onProductUpdated: updateProduct
+                                }
                             )
                         },
                         onAddToCart: { product in
@@ -190,15 +186,6 @@ struct ProductListView: View {
             print("Catalog loading error:", error)
             state = .error("Не удалось загрузить каталог")
         }
-    }
-
-    private func updateProduct(_ product: Product) {
-        if case var .content(products) = state,
-           let index = products.firstIndex(where: { $0.id == product.id }) {
-            products[index] = product
-            state = .content(products)
-        }
-        onProductUpdated(product)
     }
 
     private var emptyStateMessage: String {

@@ -37,6 +37,10 @@ enum AppFactory {
     static func makeOrderService() -> any OrderService {
         OpenAPIOrderService()
     }
+
+    static func makeProfileService() -> any ProfileService {
+        OpenAPIProfileService()
+    }
     
     static func makeProductDetailService() -> any ProductDetailService {
         OpenAPIProductDetailService()

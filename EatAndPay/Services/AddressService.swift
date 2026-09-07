@@ -1,5 +1,4 @@
 import Foundation
-import OpenAPIURLSession
 
 protocol AddressService: Sendable {
     func loadAddresses() async throws -> [DeliveryAddress]
@@ -16,35 +15,34 @@ struct OpenAPIAddressService: AddressService {
     }
 
     init(token: String = Secrets.accessToken) {
-        client = Client(
-            serverURL: try! Servers.Server1.url(),
-            transport: URLSessionTransport(),
-            middlewares: [BearerAuthMiddleware(token: token)]
-        )
+        client = OpenAPIClientFactory.makeClient(token: token)
     }
 
     func loadAddresses() async throws -> [DeliveryAddress] {
-        let output = try await client.get_sol_addresses(.init())
+        let output = try await client.listAddresses(.init())
 
         switch output {
         case .ok(let response):
             return try response.body.json.compactMap { payload in
+                let address = payload.value1
+                let identity = payload.value2
+
                 guard
-                    let id = payload.value2.id,
-                    payload.value1.coordinates.count == 2
+                    let id = identity.id,
+                    let coordinates = AddressCoordinatesDTO(address.coordinates)
                 else {
                     return nil
                 }
 
                 return DeliveryAddress(
                     id: id,
-                    addressLine: payload.value1.addressLine,
-                    longitude: payload.value1.coordinates[0],
-                    latitude: payload.value1.coordinates[1],
-                    floor: payload.value1.floor ?? "",
-                    entrance: payload.value1.entrance ?? "",
-                    intercomCode: payload.value1.intercomCode ?? "",
-                    comment: payload.value1.comment ?? ""
+                    addressLine: address.addressLine,
+                    longitude: coordinates.longitude,
+                    latitude: coordinates.latitude,
+                    floor: address.floor ?? "",
+                    entrance: address.entrance ?? "",
+                    intercomCode: address.intercomCode ?? "",
+                    comment: address.comment ?? ""
                 )
             }
         case .unauthorized:
@@ -56,7 +54,7 @@ struct OpenAPIAddressService: AddressService {
 
     func createAddress(_ draft: AddressDraft) async throws {
         let address = try makeAddress(from: draft)
-        let output = try await client.post_sol_addresses(
+        let output = try await client.createAddress(
             .init(body: .json(address))
         )
 
@@ -74,7 +72,7 @@ struct OpenAPIAddressService: AddressService {
 
     func updateAddress(id: DeliveryAddress.ID, draft: AddressDraft) async throws {
         let address = try makeAddress(from: draft)
-        let output = try await client.put_sol_addresses_sol__lcub_id_rcub_(
+        let output = try await client.updateAddress(
             .init(path: .init(id: id), body: .json(address))
         )
 
@@ -93,7 +91,7 @@ struct OpenAPIAddressService: AddressService {
     }
 
     func deleteAddress(id: DeliveryAddress.ID) async throws {
-        let output = try await client.delete_sol_addresses_sol__lcub_id_rcub_(
+        let output = try await client.deleteAddress(
             .init(path: .init(id: id))
         )
 
@@ -122,6 +120,26 @@ struct OpenAPIAddressService: AddressService {
             intercomCode: draft.intercomCode.nilIfBlank,
             comment: draft.comment.nilIfBlank
         )
+    }
+}
+
+private struct AddressCoordinatesDTO {
+    let longitude: Double
+    let latitude: Double
+
+    init?(_ values: [Double]) {
+        var iterator = values.makeIterator()
+
+        guard
+            let longitude = iterator.next(),
+            let latitude = iterator.next(),
+            iterator.next() == nil
+        else {
+            return nil
+        }
+
+        self.longitude = longitude
+        self.latitude = latitude
     }
 }
 

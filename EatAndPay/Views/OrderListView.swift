@@ -42,7 +42,7 @@ struct OrderListView: View {
                 }
             }
         }
-        .navigationTitle("Заказы")
+        .navigationTitle("Мои заказы")
         .task {
             if !didLoad {
                 await loadOrders()
@@ -111,9 +111,10 @@ struct OrderListView: View {
         }
 
         do {
-            orders = try await orderService.loadOrders()
-            didLoad = true
-            isLoading = false
+            let loadedOrders = try await orderService.loadOrders()
+            withAnimation(AppMotion.standard) {
+                orders = loadedOrders
+            }
             let imageURLs = orders.flatMap(\.items).compactMap(\.imageURL)
             await ProductImageLoader.shared.prefetch(imageURLs)
         } catch {

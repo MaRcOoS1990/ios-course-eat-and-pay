@@ -105,20 +105,8 @@ struct CartView: View {
             onCheckout()
         } label: {
             Text("Оформить заказ")
-                .font(.headline)
-                .foregroundStyle(canCheckout ? Color.white : AppColors.secondaryText)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background {
-                    if canCheckout {
-                        AppGradients.violet
-                    } else {
-                        AppGradients.smoky
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: AppRadius.button))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(AppPrimaryButtonStyle())
         .disabled(!canCheckout)
         .accessibilityHint(canCheckout ? "Оформить товары из корзины" : "Добавьте товары в корзину")
     }

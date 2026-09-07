@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 public actor ProductImageLoader {
@@ -5,18 +6,28 @@ public actor ProductImageLoader {
 
     public static let shared = ProductImageLoader()
 
-    private let cacheLimit = 100
+    private static let cacheLimit = 100
     private let dataLoader: DataLoader
+    private let diskCache: ProductImageDiskCache?
     private var cache: [URL: Data] = [:]
     private var cachedURLs: [URL] = []
     private var inFlightTasks: [URL: Task<Data, Error>] = [:]
 
     private init() {
         dataLoader = Self.loadData
+        diskCache = Self.defaultDiskCacheDirectory.map {
+            ProductImageDiskCache(directoryURL: $0, cacheLimit: Self.cacheLimit)
+        }
     }
 
-    public init(dataLoader: @escaping DataLoader) {
+    public init(
+        cacheDirectory: URL? = nil,
+        dataLoader: @escaping DataLoader
+    ) {
         self.dataLoader = dataLoader
+        diskCache = cacheDirectory.map {
+            ProductImageDiskCache(directoryURL: $0, cacheLimit: Self.cacheLimit)
+        }
     }
 
     public func data(for url: URL) async throws -> Data {
@@ -29,8 +40,14 @@ public actor ProductImageLoader {
         }
 
         let dataLoader = dataLoader
+        let diskCache = diskCache
         let task = Task {
-            try await dataLoader(url)
+            if let diskCache,
+               let cachedData = await diskCache.data(for: url) {
+                return cachedData
+            }
+
+            return try await dataLoader(url)
         }
         inFlightTasks[url] = task
 
@@ -38,6 +55,11 @@ public actor ProductImageLoader {
             let data = try await task.value
             inFlightTasks[url] = nil
             insert(data, for: url)
+
+            if let diskCache {
+                await diskCache.insert(data, for: url)
+            }
+
             return data
         } catch {
             inFlightTasks[url] = nil
@@ -73,16 +95,24 @@ public actor ProductImageLoader {
         }
     }
 
-    public func removeData(for url: URL) {
+    public func removeData(for url: URL) async {
         cache[url] = nil
         cachedURLs.removeAll { $0 == url }
+
+        if let diskCache {
+            await diskCache.removeData(for: url)
+        }
     }
 
-    public func removeAll() {
+    public func removeAll() async {
         inFlightTasks.values.forEach { $0.cancel() }
         inFlightTasks.removeAll()
         cache.removeAll()
         cachedURLs.removeAll()
+
+        if let diskCache {
+            await diskCache.removeAll()
+        }
     }
 
     private func insert(_ data: Data, for url: URL) {
@@ -91,10 +121,17 @@ public actor ProductImageLoader {
         }
         cache[url] = data
 
-        while cachedURLs.count > cacheLimit {
+        while cachedURLs.count > Self.cacheLimit {
             let oldestURL = cachedURLs.removeFirst()
             cache[oldestURL] = nil
         }
+    }
+
+    private static var defaultDiskCacheDirectory: URL? {
+        FileManager.default
+            .urls(for: .cachesDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent("EatAndPayProductImages", isDirectory: true)
     }
 
     private static func loadData(_ url: URL) async throws -> Data {
@@ -110,6 +147,91 @@ public actor ProductImageLoader {
         }
 
         return data
+    }
+}
+
+private actor ProductImageDiskCache {
+    private let directoryURL: URL
+    private let cacheLimit: Int
+    private let fileManager = FileManager.default
+
+    init(directoryURL: URL, cacheLimit: Int) {
+        self.directoryURL = directoryURL
+        self.cacheLimit = cacheLimit
+    }
+
+    func data(for url: URL) -> Data? {
+        let cachedFileURL = fileURL(for: url)
+
+        guard
+            let data = try? Data(contentsOf: cachedFileURL),
+            data.isEmpty == false
+        else {
+            try? fileManager.removeItem(at: cachedFileURL)
+            return nil
+        }
+
+        try? fileManager.setAttributes(
+            [.modificationDate: Date()],
+            ofItemAtPath: cachedFileURL.path
+        )
+        return data
+    }
+
+    func insert(_ data: Data, for url: URL) {
+        do {
+            try fileManager.createDirectory(
+                at: directoryURL,
+                withIntermediateDirectories: true
+            )
+            try data.write(to: fileURL(for: url), options: .atomic)
+            try trimIfNeeded()
+        } catch {
+            return
+        }
+    }
+
+    func removeData(for url: URL) {
+        try? fileManager.removeItem(at: fileURL(for: url))
+    }
+
+    func removeAll() {
+        try? fileManager.removeItem(at: directoryURL)
+    }
+
+    private func fileURL(for url: URL) -> URL {
+        let digest = SHA256.hash(data: Data(url.absoluteString.utf8))
+        let fileName = digest.map { String(format: "%02x", $0) }.joined()
+        return directoryURL
+            .appendingPathComponent(fileName)
+            .appendingPathExtension("cache")
+    }
+
+    private func trimIfNeeded() throws {
+        let resourceKeys: Set<URLResourceKey> = [
+            .contentModificationDateKey,
+            .isRegularFileKey
+        ]
+        let files = try fileManager.contentsOfDirectory(
+            at: directoryURL,
+            includingPropertiesForKeys: Array(resourceKeys),
+            options: .skipsHiddenFiles
+        )
+        let cachedFiles = files.compactMap { url -> (url: URL, date: Date)? in
+            guard
+                let values = try? url.resourceValues(forKeys: resourceKeys),
+                values.isRegularFile == true
+            else {
+                return nil
+            }
+
+            return (url, values.contentModificationDate ?? .distantPast)
+        }
+        .sorted { $0.date > $1.date }
+
+        for cachedFile in cachedFiles.dropFirst(cacheLimit) {
+            try? fileManager.removeItem(at: cachedFile.url)
+        }
     }
 }
 

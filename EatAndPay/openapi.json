@@ -519,6 +519,7 @@
     "paths": {
         "/users/me": {
             "get": {
+                "operationId": "getCurrentUserProfile",
                 "tags": [
                     "О пользователе"
                 ],
@@ -543,6 +544,7 @@
                 }
             },
             "put": {
+                "operationId": "updateCurrentUserProfile",
                 "tags": [
                     "О пользователе"
                 ],
@@ -1140,6 +1142,7 @@
         },
         "/addresses": {
             "get": {
+                "operationId": "listAddresses",
                 "tags": [
                     "О пользователе"
                 ],
@@ -1185,6 +1188,7 @@
                 }
             },
             "post": {
+                "operationId": "createAddress",
                 "tags": [
                     "О пользователе"
                 ],
@@ -1217,6 +1221,7 @@
         },
         "/addresses/{id}": {
             "put": {
+                "operationId": "updateAddress",
                 "tags": [
                     "О пользователе"
                 ],
@@ -1260,6 +1265,7 @@
                 }
             },
             "delete": {
+                "operationId": "deleteAddress",
                 "tags": [
                     "О пользователе"
                 ],

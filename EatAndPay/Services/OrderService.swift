@@ -1,5 +1,4 @@
 import Foundation
-import OpenAPIURLSession
 
 protocol OrderService: Sendable {
     func loadOrders() async throws -> [CustomerOrder]
@@ -14,11 +13,7 @@ struct OpenAPIOrderService: OrderService {
     }
 
     init(token: String = Secrets.accessToken) {
-        client = Client(
-            serverURL: try! Servers.Server1.url(),
-            transport: URLSessionTransport(),
-            middlewares: [BearerAuthMiddleware(token: token)]
-        )
+        client = OpenAPIClientFactory.makeClient(token: token)
     }
 
     func loadOrders() async throws -> [CustomerOrder] {

@@ -1,5 +1,4 @@
 import Foundation
-import OpenAPIURLSession
 
 protocol CartService: Sendable {
     func loadCart() async throws -> CartSnapshot
@@ -15,11 +14,7 @@ struct OpenAPICartService: CartService {
     }
 
     init(token: String = Secrets.accessToken) {
-        client = Client(
-            serverURL: try! Servers.Server1.url(),
-            transport: URLSessionTransport(),
-            middlewares: [BearerAuthMiddleware(token: token)]
-        )
+        client = OpenAPIClientFactory.makeClient(token: token)
     }
 
     func loadCart() async throws -> CartSnapshot {

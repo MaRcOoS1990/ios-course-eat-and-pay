@@ -52,6 +52,29 @@ struct Demo7Tests {
         #expect(await counter.requestsCount == 1)
     }
 
+    @Test func imageLoaderRestoresImageFromDiskCache() async throws {
+        let cacheDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: cacheDirectory) }
+
+        let firstCounter = RequestCounter()
+        let secondCounter = RequestCounter()
+        let url = try #require(URL(string: "https://example.com/cached-product.png"))
+        let firstLoader = ProductImageLoader(cacheDirectory: cacheDirectory) { url in
+            try await firstCounter.load(url)
+        }
+
+        let downloadedData = try await firstLoader.data(for: url)
+        let secondLoader = ProductImageLoader(cacheDirectory: cacheDirectory) { url in
+            try await secondCounter.load(url)
+        }
+        let cachedData = try await secondLoader.data(for: url)
+
+        #expect(cachedData == downloadedData)
+        #expect(await firstCounter.requestsCount == 1)
+        #expect(await secondCounter.requestsCount == 0)
+    }
+
     @Test func orderServiceLoadsOrderDetails() async throws {
         let response = Data(#"""
         [{
